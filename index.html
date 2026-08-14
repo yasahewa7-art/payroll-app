@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll & Employee Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen p-4 sm:p-6">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <header class="bg-slate-900 text-white p-5 rounded-xl shadow-lg flex justify-between items-center flex-wrap gap-4 no-print">
+            <div>
+                <h1 class="text-2xl font-bold">🇱🇰 Employee & Payroll Management</h1>
+                <p class="text-slate-400 text-sm">Matara & Weligama Branches</p>
+            </div>
+            <button onclick="printList()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition shadow">
+                🖨️ Print Name List
+            </button>
+        </header>
+
+        <!-- Form Section -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 no-print">
+            <h2 id="formTitle" class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">➕ Add New Employee Details</h2>
+            
+            <form id="empForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <input type="hidden" id="editIndex" value="-1">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Employee ID *</label>
+                    <input type="text" id="empId" required placeholder="e.g. EMP001" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Full Name *</label>
+                    <input type="text" id="empName" required placeholder="e.g. Anura Kumara" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Branch *</label>
+                    <select id="branch" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="Matara">Matara</option>
+                        <option value="Weligama">Weligama</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Bank Account Number *</label>
+                    <input type="text" id="bankAcc" required placeholder="e.g. 800123456" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">WhatsApp Number *</label>
+                    <input type="text" id="whatsapp" required placeholder="e.g. 0771234567" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Basic Salary (LKR) *</label>
+                    <input type="number" id="basic" required value="0" min="0" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Allowances (LKR)</label>
+                    <input type="number" id="allowances" value="0" min="0" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="md:col-span-3 lg:col-span-1 flex items-end gap-2">
+                    <button type="submit" id="saveBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition shadow">
+                        💾 Save Details
+                    </button>
+                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden bg-slate-500 hover:bg-slate-600 text-white font-bold py-2.5 px-4 rounded-lg transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filter & Table Section -->
+        <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b flex justify-between items-center flex-wrap gap-4 no-print">
+                <h3 class="font-bold text-slate-800">📋 Employee Records (A-Z Sorted)</h3>
+                
+                <!-- Filter by Branch -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-600">Filter Branch:</label>
+                    <select id="branchFilter" onchange="renderTable()" class="p-2 border rounded-lg text-sm bg-white font-semibold">
+                        <option value="All">All Branches</option>
+                        <option value="Matara">Matara Only</option>
+                        <option value="Weligama">Weligama Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Print Header (Visible only when printing) -->
+            <div class="hidden print-only p-4 border-b text-center">
+                <h1 class="text-xl font-bold">Employee Name List Report</h1>
+                <p class="text-sm text-gray-600">Branch Details & Salary Summary</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 text-white text-xs uppercase">
+                            <th class="p-3">ID</th>
+                            <th class="p-3">Name</th>
+                            <th class="p-3">Branch</th>
+                            <th class="p-3">Bank Account</th>
+                            <th class="p-3">WhatsApp</th>
+                            <th class="p-3">Basic (LKR)</th>
+                            <th class="p-3">Allowances</th>
+                            <th class="p-3">EPF 8%</th>
+                            <th class="p-3">Net Salary</th>
+                            <th class="p-3 text-center no-print">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="empTableBody" class="divide-y text-sm text-slate-700">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let employees = JSON.parse(localStorage.getItem('myEmployees')) || [];
+
+        function saveToLocalStorage() {
+            localStorage.setItem('myEmployees', JSON.stringify(employees));
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editIndex = parseInt(document.getElementById('editIndex').value);
+            const id = document.getElementById('empId').value.trim();
+            const name = document.getElementById('empName').value.trim();
+            const branch = document.getElementById('branch').value;
+            const bankAcc = document.getElementById('bankAcc').value.trim();
+            const whatsapp = document.getElementById('whatsapp').value.trim();
+            const basic = parseFloat(document.getElementById('basic').value) || 0;
+            const allowances = parseFloat(document.getElementById('allowances').value) || 0;
+
+            // Duplicate Name Check (Skip check if editing the same record)
+            const isDuplicate = employees.some((emp, index) => 
+                emp.name.toLowerCase() === name.toLowerCase() && index !== editIndex
+            );
+
+            if (isDuplicate) {
+                alert('⚠️ මෙම නම සහිත සේවකයෙකු දැනටමත් ඇතුළත් කර ඇත! වෙනත් නමක් භාවිතා කරන්න.');
+                return;
+            }
+
+            const epf8 = basic * 0.08;
+            const netSalary = (basic + allowances) - epf8;
+
+            const empObj = { id, name, branch, bankAcc, whatsapp, basic, allowances, epf8, netSalary };
+
+            if (editIndex === -1) {
+                // Add New
+                employees.push(empObj);
+            } else {
+                // Update Existing
+                employees[editIndex] = empObj;
+            }
+
+            // Auto-sort Alphabetically by Name
+            employees.sort((a, b) => a.name.localeCompare(b.name));
+
+            saveToLocalStorage();
+            resetForm();
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('empTableBody');
+            const filter = document.getElementById('branchFilter').value;
+            tbody.innerHTML = '';
+
+            const filteredData = employees.filter(emp => filter === 'All' || emp.branch === filter);
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400">කිසිදු දත්තයක් ඇතුළත් කර නොමැත.</td></tr>`;
+                return;
+            }
+
+            filteredData.forEach((emp) => {
+                // Find actual index in original array for editing/deleting
+                const originalIndex = employees.findIndex(e => e.name === emp.name && e.id === emp.id);
+
+                const row = `<tr class="hover:bg-slate-50 border-b">
+                    <td class="p-3 font-mono text-xs font-bold">${emp.id}</td>
+                    <td class="p-3 font-semibold text-slate-900">${emp.name}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 text-xs rounded font-bold ${emp.branch === 'Matara' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                            ${emp.branch}
+                        </span>
+                    </td>
+                    <td class="p-3 font-mono">${emp.bankAcc}</td>
+                    <td class="p-3 font-mono">${emp.whatsapp}</td>
+                    <td class="p-3">Rs. ${emp.basic.toFixed(2)}</td>
+                    <td class="p-3">Rs. ${emp.allowances.toFixed(2)}</td>
+                    <td class="p-3 text-red-600">Rs. ${emp.epf8.toFixed(2)}</td>
+                    <td class="p-3 font-bold text-emerald-700">Rs. ${emp.netSalary.toFixed(2)}</td>
+                    <td class="p-3 text-center space-x-1 no-print">
+                        <button onclick="editEmp(${originalIndex})" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-2.5 py-1 rounded font-bold transition">✏️ Edit</button>
+                        <button onclick="deleteEmp(${originalIndex})" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold transition">🗑️ Delete</button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function editEmp(index) {
+            const emp = employees[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('empId').value = emp.id;
+            document.getElementById('empName').value = emp.name;
+            document.getElementById('branch').value = emp.branch;
+            document.getElementById('bankAcc').value = emp.bankAcc;
+            document.getElementById('whatsapp').value = emp.whatsapp;
+            document.getElementById('basic').value = emp.basic;
+            document.getElementById('allowances').value = emp.allowances;
+
+            document.getElementById('formTitle').innerText = '✏️ Edit Employee Details';
+            document.getElementById('saveBtn').innerText = '🔄 Update Details';
+            document.getElementById('cancelBtn').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteEmp(index) {
+            if (confirm(`ඔබට ${employees[index].name} ගේ තොරතුරු ඉවත් කිරීමට අවශ්‍යද?`)) {
+                employees.splice(index, 1);
+                saveToLocalStorage();
+                renderTable();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('empForm').reset();
+            document.getElementById('editIndex').value = '-1';
+            document.getElementById('formTitle').innerText = '➕ Add New Employee Details';
+            document.getElementById('saveBtn').innerText = '💾 Save Details';
+            document.getElementById('cancelBtn').classList.add('hidden');
+        }
+
+        function printList() {
+            window.print();
+        }
+
+        // Initial Table Render
+        renderTable();
+    </script>
+</body>
+</html>
