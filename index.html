@@ -56,20 +56,20 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">Bank Account Number *</label>
-                    <input type="text" id="bankAcc" class="form-control" required placeholder="e.g. 800123456">
+                    <label class="form-label fw-semibold">Bank Account Number (Optional)</label>
+                    <input type="text" id="bankAcc" class="form-control" placeholder="e.g. 800123456">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">WhatsApp Number *</label>
-                    <input type="text" id="whatsapp" class="form-control" required placeholder="e.g. 0771234567">
+                    <label class="form-label fw-semibold">WhatsApp Number (Optional)</label>
+                    <input type="text" id="whatsapp" class="form-control" placeholder="e.g. 0771234567">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">Basic Salary (LKR) *</label>
+                    <label class="form-label fw-semibold">Daily Basic Salary (LKR) *</label>
                     <input type="number" id="basicSalary" class="form-control" step="0.01" required value="0">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">EPF Applicable Amount (LKR) *</label>
-                    <input type="number" id="epfSalary" class="form-control" step="0.01" required value="0" placeholder="EPF හදන මුදල">
+                    <label class="form-label fw-semibold">Daily EPF Applicable Amount (LKR) *</label>
+                    <input type="number" id="epfSalary" class="form-control" step="0.01" required value="0" placeholder="දිනක EPF මුදල">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Allowances (LKR)</label>
@@ -104,10 +104,9 @@
                         <th>BRANCH</th>
                         <th>BANK ACCOUNT</th>
                         <th>WHATSAPP</th>
-                        <th>BASIC (LKR)</th>
-                        <th>EPF 8% (LKR)</th>
-                        <th>ALLOWANCES</th>
-                        <th>NET SALARY</th>
+                        <th>DAILY BASIC (LKR)</th>
+                        <th>DAILY EPF (LKR)</th>
+                        <th>ALLOWANCES (LKR)</th>
                         <th class="no-print text-center">ACTIONS</th>
                     </tr>
                 </thead>
@@ -128,17 +127,14 @@
         const id = document.getElementById('empId').value.trim();
         const name = document.getElementById('empName').value.trim();
         const branch = document.getElementById('branch').value;
-        const bankAcc = document.getElementById('bankAcc').value.trim();
-        const whatsapp = document.getElementById('whatsapp').value.trim();
+        const bankAcc = document.getElementById('bankAcc').value.trim() || '-';
+        const whatsapp = document.getElementById('whatsapp').value.trim() || '-';
         const basic = parseFloat(document.getElementById('basicSalary').value) || 0;
         const epfBasic = parseFloat(document.getElementById('epfSalary').value) || 0;
         const allowances = parseFloat(document.getElementById('allowances').value) || 0;
         const editIndex = parseInt(document.getElementById('editIndex').value);
 
-        const epf8 = epfBasic * 0.08;
-        const netSalary = (basic + allowances) - epf8;
-
-        const empData = { id, name, branch, bankAcc, whatsapp, basic, epfBasic, epf8, allowances, netSalary };
+        const empData = { id, name, branch, bankAcc, whatsapp, basic, epfBasic, allowances };
 
         if (editIndex === -1) {
             employees.push(empData);
@@ -163,7 +159,7 @@
         }
 
         if (sortedEmployees.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">කිසිදු දත්තයක් ඇතුළත් කර නොමැත.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">කිසිදු දත්තයක් ඇතුළත් කර නොමැත.</td></tr>`;
             return;
         }
 
@@ -176,13 +172,12 @@
                     <td><span class="badge ${emp.branch === 'Matara' ? 'bg-primary' : 'bg-info'}">${emp.branch}</span></td>
                     <td>${emp.bankAcc}</td>
                     <td>${emp.whatsapp}</td>
-                    <td>${emp.basic.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                    <td class="text-danger fw-semibold">${emp.epf8.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="fw-semibold text-dark">${emp.basic.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="fw-semibold text-primary">${emp.epfBasic.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td>${emp.allowances.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                    <td class="text-success fw-bold">${emp.netSalary.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td class="no-print text-center">
-                        <button class="btn btn-sm btn-warning me-1" onclick="editEmployee(${originalIndex})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${originalIndex})"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-sm btn-warning me-1" onclick="editEmployee(${originalIndex})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${originalIndex})" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `;
@@ -194,10 +189,10 @@
         document.getElementById('empId').value = emp.id;
         document.getElementById('empName').value = emp.name;
         document.getElementById('branch').value = emp.branch;
-        document.getElementById('bankAcc').value = emp.bankAcc;
-        document.getElementById('whatsapp').value = emp.whatsapp;
+        document.getElementById('bankAcc').value = emp.bankAcc === '-' ? '' : emp.bankAcc;
+        document.getElementById('whatsapp').value = emp.whatsapp === '-' ? '' : emp.whatsapp;
         document.getElementById('basicSalary').value = emp.basic;
-        document.getElementById('epfSalary').value = emp.epfBasic || emp.basic;
+        document.getElementById('epfSalary').value = emp.epfBasic;
         document.getElementById('allowances').value = emp.allowances;
         document.getElementById('editIndex').value = index;
 
