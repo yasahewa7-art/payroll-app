@@ -216,54 +216,65 @@
         });
     }
 
-    // SMART AUTO-DETECTOR FOR EMPLOYEE DATA
-    function extractEmpValues(empObj) {
+    // ACCURATE FIELD MAPPER FOR FORM DATA
+    function getEmployeeSalaryDetails(empObj) {
         let dailyBasic = 0;
-        let dailyEpfBase = 0;
-        let allowances = parseFloat(empObj.allowances || 0);
+        let dailyEpf = 0;
+        let allowances = 0;
 
-        // Scan all keys in the object to match basic rate / salary / daily rate
-        Object.keys(empObj).forEach(rawKey => {
-            const key = rawKey.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const rawVal = empObj[rawKey];
-            const val = parseFloat(String(rawVal).replace(/,/g, ''));
-
-            if (!isNaN(val) && val > 0) {
-                // Look for Basic / Rate / Salary / Daily Pay / Day Rate
-                if (
-                    key.includes('basic') || 
-                    key.includes('rate') || 
-                    key.includes('salary') || 
-                    key.includes('daily') || 
-                    key.includes('day') || 
-                    key.includes('pay')
-                ) {
-                    if (!key.includes('ot') && !key.includes('allowance') && !key.includes('advance') && !key.includes('loan') && !key.includes('epf')) {
-                        dailyBasic = val;
-                    }
-                }
-                // Look for EPF Base
-                if (key.includes('epf')) {
-                    dailyEpfBase = val;
+        // Check for Daily Basic
+        const basicKeys = ['dailyBasic', 'dailyBasicSalary', 'daily_basic', 'basicSalary', 'dailyRate', 'rate', 'basic', 'salary', 'dailyPay'];
+        for (let k of basicKeys) {
+            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
+                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
+                if (!isNaN(v) && v >= 0) {
+                    dailyBasic = v;
+                    break;
                 }
             }
-        });
-
-        // Direct Fallbacks if scanning missed
-        if (!dailyBasic) {
-            dailyBasic = parseFloat(
-                empObj.dailyBasic || empObj.daily_basic || empObj.basicSalary || 
-                empObj.dailyRate || empObj.rate || empObj.basic || empObj.salary || 
-                empObj.dayRate || empObj.pay || 0
-            );
-        }
-        
-        if (!dailyEpfBase) {
-            dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.daily_epf || empObj.epfAmount || empObj.epf || 0);
-            if (!dailyEpfBase) dailyEpfBase = dailyBasic; // Default EPF base to Basic Rate
         }
 
-        return { dailyBasic, dailyEpfBase, allowances };
+        // Check for Daily EPF
+        const epfKeys = ['dailyEpf', 'dailyEpfAmount', 'daily_epf', 'epfAmount', 'epfBase', 'dailyEpfBase', 'epf'];
+        for (let k of epfKeys) {
+            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
+                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
+                if (!isNaN(v) && v >= 0) {
+                    dailyEpf = v;
+                    break;
+                }
+            }
+        }
+        if (dailyEpf === 0) dailyEpf = dailyBasic; // Fallback if EPF not distinct
+
+        // Check for Allowances
+        const allowKeys = ['allowances', 'allowance', 'allowanceAmount'];
+        for (let k of allowKeys) {
+            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
+                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
+                if (!isNaN(v) && v >= 0) {
+                    allowances = v;
+                    break;
+                }
+            }
+        }
+
+        // Dynamic Fallback Scan if basic still 0
+        if (dailyBasic === 0) {
+            for (let key in empObj) {
+                let val = parseFloat(String(empObj[key]).replace(/,/g, ''));
+                if (!isNaN(val) && val > 0 && typeof empObj[key] !== 'object') {
+                    let kLower = key.toLowerCase();
+                    if ((kLower.includes('basic') || kLower.includes('daily') || kLower.includes('rate') || kLower.includes('salary')) && 
+                        !kLower.includes('epf') && !kLower.includes('allow') && !kLower.includes('id')) {
+                        dailyBasic = val;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return { dailyBasic, dailyEpf, allowances };
     }
 
     function onMonthOrEmployeeChange() {
@@ -307,8 +318,8 @@
         const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // Auto Extract Basic Rate & Values
-        const { dailyBasic, dailyEpfBase, allowances } = extractEmpValues(empObj);
+        // Fetch Correct Salary Values
+        const { dailyBasic, dailyEpf, allowances } = getEmployeeSalaryDetails(empObj);
 
         // Attendance Data (OT, Advance, Loan)
         const key = `${empId}_${month}`;
@@ -329,7 +340,7 @@
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOtHours;
 
-        const epfApplicableAmount = dailyEpfBase * daysWorkedVal;
+        const epfApplicableAmount = dailyEpf * daysWorkedVal;
         const epf8 = epfApplicableAmount * 0.08;
         const epf12 = epfApplicableAmount * 0.12;
         const etf3 = epfApplicableAmount * 0.03;
