@@ -47,17 +47,17 @@
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Select Month *</label>
-                <input type="month" id="salMonth" class="form-control" onchange="calculateSalary()">
+                <input type="month" id="salMonth" class="form-control" onchange="onMonthOrEmployeeChange()">
             </div>
             <div class="col-md-5">
                 <label class="form-label fw-semibold">Select Employee *</label>
-                <select id="salEmpSelect" class="form-select" onchange="calculateSalary()">
+                <select id="salEmpSelect" class="form-select" onchange="onMonthOrEmployeeChange()">
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Days Worked in Month *</label>
-                <input type="number" id="daysWorked" class="form-control" value="0" min="0" max="31" oninput="calculateSalary()">
+                <input type="number" id="daysWorked" class="form-control" value="31" min="0" max="31" oninput="calculateSalary()" onchange="calculateSalary()">
             </div>
         </div>
     </div>
@@ -171,11 +171,10 @@
     let employees = [];
     let attendanceData = {};
 
-    // Default Current Month
+    // Default Month Setup
     document.getElementById('salMonth').value = new Date().toISOString().slice(0, 7);
 
     function loadDataFromStorage() {
-        // Search across all common keys used in payroll apps
         employees = JSON.parse(localStorage.getItem('payroll_employees')) || 
                     JSON.parse(localStorage.getItem('employees')) || [];
                     
@@ -195,77 +194,81 @@
         });
     }
 
-    function calculateSalary() {
+    function onMonthOrEmployeeChange() {
         loadDataFromStorage();
-
         const month = document.getElementById('salMonth').value;
         const empId = document.getElementById('salEmpSelect').value;
-        let daysWorkedInput = parseFloat(document.getElementById('daysWorked').value);
 
         if (!month || !empId) {
             resetPayslip();
             return;
         }
 
-        // Find Employee Object by ID flexibly
+        // Attendance එකෙන් පැමිණි දින ගණන සොයාබැලීම
+        const key = `${empId}_${month}`;
+        const monthAttendance = attendanceData[key] || {};
+        let presentDaysCount = 0;
+
+        Object.values(monthAttendance).forEach(day => {
+            if (day.status === 'Present') presentDaysCount++;
+        });
+
+        // Attendance හි දත්ත තිබේ නම් එම දින ගණන ද, නැතිනම් 31 default ලෙස දායි
+        document.getElementById('daysWorked').value = presentDaysCount > 0 ? presentDaysCount : 31;
+        
+        calculateSalary();
+    }
+
+    function calculateSalary() {
+        loadDataFromStorage();
+
+        const month = document.getElementById('salMonth').value;
+        const empId = document.getElementById('salEmpSelect').value;
+        
+        // Days Worked Input field එකෙන් අගය කෙලින්ම ගනියි
+        let daysWorkedVal = parseFloat(document.getElementById('daysWorked').value);
+        if (isNaN(daysWorkedVal) || daysWorkedVal < 0) {
+            daysWorkedVal = 0;
+        }
+
+        if (!month || !empId) {
+            resetPayslip();
+            return;
+        }
+
+        // සේවකයාගේ විස්තර සොයාගැනීම
         const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // READ ALL POSSIBLE PROPERTY NAMES FOR DAILY BASIC & EPF
-        let dailyBasic = 0;
-        let dailyEpfBase = 0;
-        let allowances = 0;
+        // Key Names කියවීම
+        let dailyBasic = parseFloat(empObj.dailyBasic || empObj.daily_basic || empObj.basicSalary || empObj.dailyBasicSalary || empObj.salary || 0);
+        let dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.daily_epf || empObj.epfAmount || empObj.dailyEpfAmount || 0);
+        let allowances = parseFloat(empObj.allowances || 0);
 
-        // Extract Daily Basic
-        if (empObj.dailyBasic !== undefined) dailyBasic = parseFloat(empObj.dailyBasic);
-        else if (empObj.daily_basic !== undefined) dailyBasic = parseFloat(empObj.daily_basic);
-        else if (empObj.basicSalary !== undefined) dailyBasic = parseFloat(empObj.basicSalary);
-        else if (empObj.dailyBasicSalary !== undefined) dailyBasic = parseFloat(empObj.dailyBasicSalary);
-        else if (empObj.salary !== undefined) dailyBasic = parseFloat(empObj.salary);
-
-        // Extract Daily EPF
-        if (empObj.dailyEpf !== undefined) dailyEpfBase = parseFloat(empObj.dailyEpf);
-        else if (empObj.daily_epf !== undefined) dailyEpfBase = parseFloat(empObj.daily_epf);
-        else if (empObj.epfAmount !== undefined) dailyEpfBase = parseFloat(empObj.epfAmount);
-        else if (empObj.dailyEpfAmount !== undefined) dailyEpfBase = parseFloat(empObj.dailyEpfAmount);
-
-        // Extract Allowances
-        if (empObj.allowances !== undefined) allowances = parseFloat(empObj.allowances);
-
-        // Sanitize values
         dailyBasic = isNaN(dailyBasic) ? 0 : dailyBasic;
         dailyEpfBase = isNaN(dailyEpfBase) ? 0 : dailyEpfBase;
         allowances = isNaN(allowances) ? 0 : allowances;
 
-        // Search Attendance
+        // Attendance Data (OT, Advance, Loan)
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
         let totalOtHours = 0;
         let totalAdvance = 0;
         let totalLoan = 0;
-        let presentDaysCount = 0;
 
         Object.values(monthAttendance).forEach(day => {
             totalOtHours += parseFloat(day.ot || day.otHours || 0);
             totalAdvance += parseFloat(day.advance || 0);
             totalLoan += parseFloat(day.loan || 0);
-            if (day.status === 'Present') presentDaysCount++;
         });
 
-        // Determine days worked (defaulting to 31 if nothing entered or logged)
-        let actualDaysWorked = (!isNaN(daysWorkedInput) && daysWorkedInput > 0) ? daysWorkedInput : (presentDaysCount > 0 ? presentDaysCount : 31);
-        
-        if (document.activeElement !== document.getElementById('daysWorked') && (isNaN(daysWorkedInput) || daysWorkedInput === 0)) {
-            document.getElementById('daysWorked').value = actualDaysWorked;
-        }
-
-        // CALCULATIONS
-        const workedBasicSalary = dailyBasic * actualDaysWorked;
+        // ගණනය කිරීම් (Calculations)
+        const workedBasicSalary = dailyBasic * daysWorkedVal;
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOtHours;
 
-        const epfApplicableAmount = dailyEpfBase * actualDaysWorked;
+        const epfApplicableAmount = dailyEpfBase * daysWorkedVal;
         const epf8 = epfApplicableAmount * 0.08;
         const epf12 = epfApplicableAmount * 0.12;
         const etf3 = epfApplicableAmount * 0.03;
@@ -274,15 +277,15 @@
         const totalDeductions = epf8 + totalAdvance + totalLoan;
         const netSalary = grossEarnings - totalDeductions;
 
-        // DISPLAY RESULTS
+        // පඩිපතට Data ලිවීම (Display Output)
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
         document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId || empObj.employeeId;
         document.getElementById('dispEmpName').innerText = empObj.name;
         document.getElementById('dispEmpBranch').innerText = empObj.branch;
-        document.getElementById('dispDaysWorked').innerText = `${actualDaysWorked} Days`;
+        document.getElementById('dispDaysWorked').innerText = `${daysWorkedVal} Days`;
         
         document.getElementById('lblDailyBasic').innerText = formatLKR(dailyBasic);
-        document.getElementById('lblDaysWorked').innerText = actualDaysWorked;
+        document.getElementById('lblDaysWorked').innerText = daysWorkedVal;
         document.getElementById('dispWorkedBasic').innerText = formatLKR(workedBasicSalary);
         
         document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
@@ -335,7 +338,7 @@
         document.getElementById('dispEtf3').innerText = '0.00 LKR';
     }
 
-    // Initialize Page
+    // Load Data On Startup
     populateEmployeeDropdown();
 </script>
 
