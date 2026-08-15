@@ -1,427 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary Payslip - Rukman Engineering (Pvt) Ltd</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .header-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
-        .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .btn-custom { border-radius: 6px; font-weight: 500; }
-        .table-dark-custom { background-color: #0f172a; color: white; }
-        
-        .payslip-box { background: white; border: 2px solid #0f172a; border-radius: 8px; padding: 30px; }
-        .company-header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
-        
-        .emp-info-grid {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 15px 20px;
-        }
+function calculateSalary() {
+    loadDataFromStorage();
 
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; font-size: 11pt; }
-            .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
-            .payslip-box { border: 1px solid #000 !important; padding: 15px !important; }
-        }
-    </style>
-</head>
-<body>
+    const month = document.getElementById('salMonth').value;
+    const empId = document.getElementById('salEmpSelect').value;
+    
+    let daysWorkedVal = parseFloat(document.getElementById('daysWorked').value);
+    if (isNaN(daysWorkedVal) || daysWorkedVal < 0) daysWorkedVal = 0;
 
-<div class="container my-4">
-    <!-- Web View Header -->
-    <div class="card header-bg p-4 mb-4 no-print">
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
-            <div>
-                <h2 class="fw-bold mb-1"><i class="fa-solid fa-calculator me-2"></i>Salary Calculation & Payslip</h2>
-                <p class="mb-0 text-light opacity-75">Rukman Engineering (Pvt) Ltd</p>
-            </div>
-            <div class="d-flex gap-2 mt-3 mt-md-0">
-                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-house me-2"></i>Main Window</a>
-                <button class="btn btn-success btn-custom" onclick="sendWhatsAppPayslip()"><i class="fa-brands fa-whatsapp me-2"></i>Send via WhatsApp</button>
-                <button class="btn btn-primary btn-custom" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Print Payslip</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Employee & Month Selector -->
-    <div class="card p-4 mb-4 no-print">
-        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-check me-2"></i>Select Employee & Month</h5>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Select Month *</label>
-                <input type="month" id="salMonth" class="form-control" onchange="onMonthOrEmployeeChange()">
-            </div>
-            <div class="col-md-5">
-                <label class="form-label fw-semibold">Select Employee *</label>
-                <select id="salEmpSelect" class="form-select" onchange="onMonthOrEmployeeChange()">
-                    <option value="">-- Choose Employee --</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Days Worked in Month *</label>
-                <input type="number" id="daysWorked" class="form-control" value="31" min="0" max="31" oninput="calculateSalary()" onchange="calculateSalary()">
-            </div>
-        </div>
-    </div>
-
-    <!-- Payslip Printable Area -->
-    <div class="payslip-box" id="payslipArea">
-        <div class="company-header">
-            <h2 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1.5px; color: #0f172a;">Rukman Engineering (Pvt) Ltd</h2>
-            <p class="mb-1 text-muted fw-semibold">Monthly Salary Payslip</p>
-            <span class="badge bg-dark text-white px-3 py-1 fs-6" id="dispMonth">Month: -</span>
-        </div>
-
-        <!-- Employee Info Section -->
-        <div class="emp-info-grid mb-4">
-            <div class="row g-2 fs-6">
-                <div class="col-md-6"><strong>Employee ID:</strong> <span id="dispEmpId" class="ms-1">-</span></div>
-                <div class="col-md-6"><strong>Employee Name:</strong> <span id="dispEmpName" class="ms-1">-</span></div>
-                <div class="col-md-6"><strong>Branch:</strong> <span id="dispEmpBranch" class="ms-1">-</span></div>
-                <div class="col-md-6"><strong>Total Days Worked:</strong> <span id="dispDaysWorked" class="ms-1 fw-bold text-dark">0 Days</span></div>
-            </div>
-        </div>
-
-        <!-- Earnings Table -->
-        <div class="table-responsive mb-4">
-            <table class="table table-bordered align-middle">
-                <thead class="table-dark-custom">
-                    <tr>
-                        <th>EARNINGS DETAILS</th>
-                        <th class="text-center" style="width: 25%;">RATE / HOURS</th>
-                        <th class="text-end" style="width: 30%;">AMOUNT (LKR)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">Basic Salary</div>
-                            <small class="text-muted">Daily Basic Rate: LKR <span id="lblDailyBasic">0.00</span></small>
-                        </td>
-                        <td class="text-center fw-semibold"><span id="lblDaysWorked">0</span> Days</td>
-                        <td class="text-end fw-bold text-primary" id="dispWorkedBasic">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">Overtime (OT) Earnings</div>
-                            <small class="text-muted">OT Rate: LKR <span id="dispOtRate">0.00</span> / Hr</small>
-                        </td>
-                        <td class="text-center fw-semibold"><span id="dispOtHours">0.0</span> Hrs</td>
-                        <td class="text-end fw-semibold text-success" id="dispOtAmount">0.00</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="fw-semibold">Allowances</td>
-                        <td class="text-end fw-semibold text-success" id="dispAllowances">0.00</td>
-                    </tr>
-                    <tr class="table-light fw-bold fs-6">
-                        <td colspan="2" class="text-uppercase">Gross Earnings</td>
-                        <td class="text-end text-success fs-6" id="dispGrossEarnings">0.00</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Deductions Table -->
-        <div class="table-responsive mb-4">
-            <table class="table table-bordered align-middle">
-                <thead class="table-dark-custom">
-                    <tr>
-                        <th>DEDUCTIONS DETAILS</th>
-                        <th class="text-center" style="width: 25%;">BASIS</th>
-                        <th class="text-end" style="width: 30%;">AMOUNT (LKR)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">EPF (Employee Contribution 8%)</div>
-                        </td>
-                        <td class="text-center small text-muted">Base: LKR <span id="dispEpfBase">0.00</span></td>
-                        <td class="text-end fw-semibold text-danger" id="dispEpf8">0.00</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">Salary Advance Deductions</td>
-                        <td class="text-end fw-semibold text-danger" id="dispAdvance">0.00</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">Loan Deductions</td>
-                        <td class="text-end fw-semibold text-danger" id="dispLoan">0.00</td>
-                    </tr>
-                    <tr class="table-light fw-bold fs-6">
-                        <td colspan="2" class="text-uppercase">Total Deductions</td>
-                        <td class="text-end text-danger fs-6" id="dispTotalDeductions">0.00</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Net Salary Summary -->
-        <div class="p-3 bg-light border rounded d-flex justify-content-between align-items-center mb-4" style="border-left: 5px solid #0d6efd !important;">
-            <h4 class="fw-bold mb-0 text-dark text-uppercase">Net Salary (Payable):</h4>
-            <h3 class="fw-bold mb-0 text-primary" id="dispNetSalary">0.00 LKR</h3>
-        </div>
-
-        <!-- Employer Contributions -->
-        <div class="border p-3 rounded mb-4" style="background-color: #f8f9fa;">
-            <h6 class="fw-bold mb-2 text-muted text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;">Employer Contributions (Not Deducted From Salary):</h6>
-            <div class="row fs-6">
-                <div class="col-6"><strong>EPF (12%):</strong> <span id="dispEpf12" class="ms-1 fw-semibold">0.00 LKR</span></div>
-                <div class="col-6"><strong>ETF (3%):</strong> <span id="dispEtf3" class="ms-1 fw-semibold">0.00 LKR</span></div>
-            </div>
-        </div>
-
-        <!-- Signatures -->
-        <div class="row pt-4 text-center mt-5">
-            <div class="col-6">
-                <div style="border-top: 1px dashed #000; width: 75%; margin: 0 auto;"></div>
-                <p class="mt-2 fw-semibold mb-0">Employee Signature</p>
-            </div>
-            <div class="col-6">
-                <div style="border-top: 1px dashed #000; width: 75%; margin: 0 auto;"></div>
-                <p class="mt-2 fw-semibold mb-0">Authorized Signature</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let employees = [];
-    let attendanceData = {};
-
-    // Default Month Setup
-    document.getElementById('salMonth').value = new Date().toISOString().slice(0, 7);
-
-    function loadDataFromStorage() {
-        employees = JSON.parse(localStorage.getItem('payroll_employees')) || 
-                    JSON.parse(localStorage.getItem('employees')) || [];
-                    
-        attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || 
-                         JSON.parse(localStorage.getItem('attendance')) || {};
+    if (!month || !empId) {
+        resetPayslip();
+        return;
     }
 
-    function populateEmployeeDropdown() {
-        loadDataFromStorage();
-        const empSelect = document.getElementById('salEmpSelect');
-        empSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
-        
-        let sortedEmployees = [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        sortedEmployees.forEach(emp => {
-            const eId = emp.id || emp.empId || emp.employeeId;
-            empSelect.innerHTML += `<option value="${eId}">${emp.name} (${eId}) - ${emp.branch}</option>`;
-        });
-    }
+    const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
+    if (!empObj) return;
 
-    function getEmployeeSalaryDetails(empObj) {
-        let dailyBasic = 0;
-        let dailyEpf = 0;
-        let allowances = 0;
+    const { dailyBasic, dailyEpf, allowances } = getEmployeeSalaryDetails(empObj);
 
-        const basicKeys = ['dailyBasic', 'dailyBasicSalary', 'daily_basic', 'basicSalary', 'dailyRate', 'rate', 'basic', 'salary', 'dailyPay'];
-        for (let k of basicKeys) {
-            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
-                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
-                if (!isNaN(v) && v >= 0) { dailyBasic = v; break; }
-            }
-        }
+    const key = `${empId}_${month}`;
+    const monthAttendance = attendanceData[key] || {};
 
-        const epfKeys = ['dailyEpf', 'dailyEpfAmount', 'daily_epf', 'epfAmount', 'epfBase', 'dailyEpfBase', 'epf'];
-        for (let k of epfKeys) {
-            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
-                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
-                if (!isNaN(v) && v >= 0) { dailyEpf = v; break; }
-            }
-        }
-        if (dailyEpf === 0) dailyEpf = dailyBasic;
+    let totalOtHours = 0;
+    let totalAdvance = 0;
+    let totalLoan = 0;
 
-        const allowKeys = ['allowances', 'allowance', 'allowanceAmount'];
-        for (let k of allowKeys) {
-            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
-                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
-                if (!isNaN(v) && v >= 0) { allowances = v; break; }
-            }
-        }
+    Object.values(monthAttendance).forEach(day => {
+        totalOtHours += parseFloat(day.ot || day.otHours || 0);
+        totalAdvance += parseFloat(day.advance || 0);
+        totalLoan += parseFloat(day.loan || 0);
+    });
 
-        return { dailyBasic, dailyEpf, allowances };
-    }
+    // 1. Basic Salary Calculation (Daily Basic * Days Worked)
+    const workedBasicSalary = dailyBasic * daysWorkedVal;
 
-    function onMonthOrEmployeeChange() {
-        loadDataFromStorage();
-        const month = document.getElementById('salMonth').value;
-        const empId = document.getElementById('salEmpSelect').value;
+    // 2. OT Calculation (Daily Basic / 8 * OT Hours)
+    const otRate = dailyBasic / 8;
+    const otEarnings = otRate * totalOtHours;
 
-        if (!month || !empId) {
-            resetPayslip();
-            return;
-        }
+    // 3. EPF & ETF Base (Daily EPF Amount * Days Worked)
+    const epfApplicableAmount = dailyEpf * daysWorkedVal;
+    const epf8 = epfApplicableAmount * 0.08;
+    const epf12 = epfApplicableAmount * 0.12;
+    const etf3 = epfApplicableAmount * 0.03;
 
-        const key = `${empId}_${month}`;
-        const monthAttendance = attendanceData[key] || {};
-        let presentDaysCount = 0;
+    // 4. Gross Earnings & Net Deductions
+    const grossEarnings = workedBasicSalary + otEarnings + allowances;
+    const totalDeductions = epf8 + totalAdvance + totalLoan;
+    const netSalary = grossEarnings - totalDeductions;
 
-        Object.values(monthAttendance).forEach(day => {
-            if (day.status === 'Present') presentDaysCount++;
-        });
+    // Displaying Results in Payslip UI
+    document.getElementById('dispMonth').innerText = `Month: ${month}`;
+    document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId || empObj.employeeId;
+    document.getElementById('dispEmpName').innerText = empObj.name;
+    document.getElementById('dispEmpBranch').innerText = empObj.branch;
+    document.getElementById('dispDaysWorked').innerText = `${daysWorkedVal} Days`;
+    
+    document.getElementById('lblDailyBasic').innerText = formatLKR(dailyBasic);
+    document.getElementById('lblDaysWorked').innerText = daysWorkedVal;
+    document.getElementById('dispWorkedBasic').innerText = formatLKR(workedBasicSalary);
+    
+    document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
+    document.getElementById('dispOtRate').innerText = formatLKR(otRate);
+    document.getElementById('dispOtAmount').innerText = formatLKR(otEarnings);
+    document.getElementById('dispAllowances').innerText = formatLKR(allowances);
+    document.getElementById('dispGrossEarnings').innerText = formatLKR(grossEarnings);
 
-        document.getElementById('daysWorked').value = presentDaysCount > 0 ? presentDaysCount : 31;
-        calculateSalary();
-    }
+    document.getElementById('dispEpfBase').innerText = formatLKR(epfApplicableAmount);
+    document.getElementById('dispEpf8').innerText = formatLKR(epf8);
+    document.getElementById('dispAdvance').innerText = formatLKR(totalAdvance);
+    document.getElementById('dispLoan').innerText = formatLKR(totalLoan);
+    document.getElementById('dispTotalDeductions').innerText = formatLKR(totalDeductions);
 
-    function calculateSalary() {
-        loadDataFromStorage();
+    document.getElementById('dispNetSalary').innerText = `${formatLKR(netSalary)} LKR`;
 
-        const month = document.getElementById('salMonth').value;
-        const empId = document.getElementById('salEmpSelect').value;
-        
-        let daysWorkedVal = parseFloat(document.getElementById('daysWorked').value);
-        if (isNaN(daysWorkedVal) || daysWorkedVal < 0) daysWorkedVal = 0;
-
-        if (!month || !empId) {
-            resetPayslip();
-            return;
-        }
-
-        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
-        if (!empObj) return;
-
-        const { dailyBasic, dailyEpf, allowances } = getEmployeeSalaryDetails(empObj);
-
-        const key = `${empId}_${month}`;
-        const monthAttendance = attendanceData[key] || {};
-
-        let totalOtHours = 0;
-        let totalAdvance = 0;
-        let totalLoan = 0;
-
-        Object.values(monthAttendance).forEach(day => {
-            totalOtHours += parseFloat(day.ot || day.otHours || 0);
-            totalAdvance += parseFloat(day.advance || 0);
-            totalLoan += parseFloat(day.loan || 0);
-        });
-
-        const workedBasicSalary = dailyBasic * daysWorkedVal;
-        const otRate = dailyBasic / 8;
-        const otEarnings = otRate * totalOtHours;
-
-        const epfApplicableAmount = dailyEpf * daysWorkedVal;
-        const epf8 = epfApplicableAmount * 0.08;
-        const epf12 = epfApplicableAmount * 0.12;
-        const etf3 = epfApplicableAmount * 0.03;
-
-        const grossEarnings = workedBasicSalary + otEarnings + allowances;
-        const totalDeductions = epf8 + totalAdvance + totalLoan;
-        const netSalary = grossEarnings - totalDeductions;
-
-        document.getElementById('dispMonth').innerText = `Month: ${month}`;
-        document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId || empObj.employeeId;
-        document.getElementById('dispEmpName').innerText = empObj.name;
-        document.getElementById('dispEmpBranch').innerText = empObj.branch;
-        document.getElementById('dispDaysWorked').innerText = `${daysWorkedVal} Days`;
-        
-        document.getElementById('lblDailyBasic').innerText = formatLKR(dailyBasic);
-        document.getElementById('lblDaysWorked').innerText = daysWorkedVal;
-        document.getElementById('dispWorkedBasic').innerText = formatLKR(workedBasicSalary);
-        
-        document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
-        document.getElementById('dispOtRate').innerText = formatLKR(otRate);
-        document.getElementById('dispOtAmount').innerText = formatLKR(otEarnings);
-        document.getElementById('dispAllowances').innerText = formatLKR(allowances);
-        document.getElementById('dispGrossEarnings').innerText = formatLKR(grossEarnings);
-
-        document.getElementById('dispEpfBase').innerText = formatLKR(epfApplicableAmount);
-        document.getElementById('dispEpf8').innerText = formatLKR(epf8);
-        document.getElementById('dispAdvance').innerText = formatLKR(totalAdvance);
-        document.getElementById('dispLoan').innerText = formatLKR(totalLoan);
-        document.getElementById('dispTotalDeductions').innerText = formatLKR(totalDeductions);
-
-        document.getElementById('dispNetSalary').innerText = `${formatLKR(netSalary)} LKR`;
-
-        document.getElementById('dispEpf12').innerText = `${formatLKR(epf12)} LKR`;
-        document.getElementById('dispEtf3').innerText = `${formatLKR(etf3)} LKR`;
-    }
-
-    // WHATSAPP SHARE FUNCTION
-    function sendWhatsAppPayslip() {
-        const empId = document.getElementById('salEmpSelect').value;
-        const month = document.getElementById('salMonth').value;
-        const daysWorked = document.getElementById('daysWorked').value;
-
-        if (!empId) {
-            alert("කරුණාකර පළමුව සේවකයෙකු තෝරන්න (Select Employee).");
-            return;
-        }
-
-        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
-        const rawPhone = empObj ? (empObj.whatsapp || empObj.whatsappNumber || empObj.phone || '') : '';
-
-        if (!rawPhone) {
-            alert(`මෙම සේවකයා (${empObj ? empObj.name : ''}) සඳහා WhatsApp අංකයක් ඇතුළත් කර නැත.`);
-            return;
-        }
-
-        const netSalary = document.getElementById('dispNetSalary').innerText;
-        const grossEarnings = document.getElementById('dispGrossEarnings').innerText;
-        const totalDeductions = document.getElementById('dispTotalDeductions').innerText;
-
-        // Message text template
-        const message = `*RUKMAN ENGINEERING (PVT) LTD*\n` +
-                        `*Monthly Salary Payslip Summary*\n\n` +
-                        `👤 *Employee:* ${empObj.name} (${empObj.id || empObj.empId})\n` +
-                        `📅 *Month:* ${month}\n` +
-                        `📆 *Days Worked:* ${daysWorked} Days\n\n` +
-                        `💵 *Gross Earnings:* LKR ${grossEarnings}\n` +
-                        `🔻 *Total Deductions:* LKR ${totalDeductions}\n` +
-                        `---------------------------------\n` +
-                        `✅ *NET PAYABLE SALARY:* ${netSalary}\n` +
-                        `---------------------------------\n` +
-                        `Thank you!`;
-
-        let phone = rawPhone.trim().replace(/[^0-9]/g, '');
-        if (phone.startsWith('0')) phone = '94' + phone.substring(1);
-
-        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(waUrl, '_blank');
-    }
-
-    function formatLKR(val) {
-        return (val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function resetPayslip() {
-        document.getElementById('dispMonth').innerText = 'Month: -';
-        document.getElementById('dispEmpId').innerText = '-';
-        document.getElementById('dispEmpName').innerText = '-';
-        document.getElementById('dispEmpBranch').innerText = '-';
-        document.getElementById('dispDaysWorked').innerText = '0 Days';
-
-        document.getElementById('lblDailyBasic').innerText = '0.00';
-        document.getElementById('lblDaysWorked').innerText = '0';
-        document.getElementById('dispWorkedBasic').innerText = '0.00';
-        
-        document.getElementById('dispOtHours').innerText = '0.0';
-        document.getElementById('dispOtRate').innerText = '0.00';
-        document.getElementById('dispOtAmount').innerText = '0.00';
-        document.getElementById('dispAllowances').innerText = '0.00';
-        document.getElementById('dispGrossEarnings').innerText = '0.00';
-
-        document.getElementById('dispEpfBase').innerText = '0.00';
-        document.getElementById('dispEpf8').innerText = '0.00';
-        document.getElementById('dispAdvance').innerText = '0.00';
-        document.getElementById('dispLoan').innerText = '0.00';
-        document.getElementById('dispTotalDeductions').innerText = '0.00';
-
-        document.getElementById('dispNetSalary').innerText = '0.00 LKR';
-        document.getElementById('dispEpf12').innerText = '0.00 LKR';
-        document.getElementById('dispEtf3').innerText = '0.00 LKR';
-    }
-
-    populateEmployeeDropdown();
-</script>
-
-</body>
-</html>
+    document.getElementById('dispEpf12').innerText = `${formatLKR(epf12)} LKR`;
+    document.getElementById('dispEtf3').innerText = `${formatLKR(etf3)} LKR`;
+}
