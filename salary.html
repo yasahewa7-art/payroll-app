@@ -182,11 +182,16 @@
         
         let sortedEmployees = [...employees].sort((a, b) => a.name.localeCompare(b.name));
         sortedEmployees.forEach(emp => {
-            empSelect.innerHTML += `<option value="${emp.id}">${emp.name} (${emp.id}) - ${emp.branch}</option>`;
+            const idVal = emp.id || emp.empId;
+            empSelect.innerHTML += `<option value="${idVal}">${emp.name} (${idVal}) - ${emp.branch}</option>`;
         });
     }
 
     function calculateSalary() {
+        // Refresh latest data from localStorage
+        employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
+        attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
+
         const month = document.getElementById('salMonth').value;
         const empId = document.getElementById('salEmpSelect').value;
         let daysWorkedInput = parseFloat(document.getElementById('daysWorked').value);
@@ -196,12 +201,13 @@
             return;
         }
 
-        const empObj = employees.find(e => String(e.id) === String(empId));
+        // Search flexible match for String or Number ID
+        const empObj = employees.find(e => String(e.id || e.empId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // Daily Rates from Index Page Data
-        const dailyBasic = parseFloat(empObj.dailyBasic || empObj.salary || 0);
-        const dailyEpfBase = parseFloat(empObj.dailyEpf || 0);
+        // Extract daily basic, epf base, allowances safely
+        const dailyBasic = parseFloat(empObj.dailyBasic || empObj.basicSalary || empObj.salary || 0);
+        const dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.epfAmount || 0);
         const allowances = parseFloat(empObj.allowances || 0);
 
         const key = `${empId}_${month}`;
@@ -214,15 +220,19 @@
         let presentDaysCount = 0;
 
         Object.values(monthAttendance).forEach(day => {
-            totalOtHours += parseFloat(day.ot || 0);
+            totalOtHours += parseFloat(day.ot || day.otHours || 0);
             totalAdvance += parseFloat(day.advance || 0);
             totalLoan += parseFloat(day.loan || 0);
             if (day.status === 'Present') presentDaysCount++;
         });
 
-        // Use input or attendance days
+        // Use daysWorked input or present days
         let actualDaysWorked = isNaN(daysWorkedInput) || daysWorkedInput === 0 ? presentDaysCount : daysWorkedInput;
-        document.getElementById('daysWorked').value = actualDaysWorked;
+        
+        // If user hasn't explicitly set input yet, sync UI value
+        if (document.activeElement !== document.getElementById('daysWorked') && (isNaN(daysWorkedInput) || daysWorkedInput === 0)) {
+            document.getElementById('daysWorked').value = actualDaysWorked;
+        }
 
         // --- CALCULATIONS ---
         // 1. Basic Portion = Daily Basic * Days Worked
@@ -245,7 +255,7 @@
 
         // --- DISPLAYING VALUES ---
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
-        document.getElementById('dispEmpId').innerText = empObj.id;
+        document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId;
         document.getElementById('dispEmpName').innerText = empObj.name;
         document.getElementById('dispEmpBranch').innerText = empObj.branch;
         document.getElementById('dispDaysWorked').innerText = `${actualDaysWorked} Days`;
