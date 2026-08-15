@@ -216,6 +216,56 @@
         });
     }
 
+    // SMART AUTO-DETECTOR FOR EMPLOYEE DATA
+    function extractEmpValues(empObj) {
+        let dailyBasic = 0;
+        let dailyEpfBase = 0;
+        let allowances = parseFloat(empObj.allowances || 0);
+
+        // Scan all keys in the object to match basic rate / salary / daily rate
+        Object.keys(empObj).forEach(rawKey => {
+            const key = rawKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const rawVal = empObj[rawKey];
+            const val = parseFloat(String(rawVal).replace(/,/g, ''));
+
+            if (!isNaN(val) && val > 0) {
+                // Look for Basic / Rate / Salary / Daily Pay / Day Rate
+                if (
+                    key.includes('basic') || 
+                    key.includes('rate') || 
+                    key.includes('salary') || 
+                    key.includes('daily') || 
+                    key.includes('day') || 
+                    key.includes('pay')
+                ) {
+                    if (!key.includes('ot') && !key.includes('allowance') && !key.includes('advance') && !key.includes('loan') && !key.includes('epf')) {
+                        dailyBasic = val;
+                    }
+                }
+                // Look for EPF Base
+                if (key.includes('epf')) {
+                    dailyEpfBase = val;
+                }
+            }
+        });
+
+        // Direct Fallbacks if scanning missed
+        if (!dailyBasic) {
+            dailyBasic = parseFloat(
+                empObj.dailyBasic || empObj.daily_basic || empObj.basicSalary || 
+                empObj.dailyRate || empObj.rate || empObj.basic || empObj.salary || 
+                empObj.dayRate || empObj.pay || 0
+            );
+        }
+        
+        if (!dailyEpfBase) {
+            dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.daily_epf || empObj.epfAmount || empObj.epf || 0);
+            if (!dailyEpfBase) dailyEpfBase = dailyBasic; // Default EPF base to Basic Rate
+        }
+
+        return { dailyBasic, dailyEpfBase, allowances };
+    }
+
     function onMonthOrEmployeeChange() {
         loadDataFromStorage();
         const month = document.getElementById('salMonth').value;
@@ -257,16 +307,10 @@
         const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // Key Names Reading
-        let dailyBasic = parseFloat(empObj.dailyBasic || empObj.daily_basic || empObj.basicSalary || empObj.dailyBasicSalary || empObj.salary || 0);
-        let dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.daily_epf || empObj.epfAmount || empObj.dailyEpfAmount || 0);
-        let allowances = parseFloat(empObj.allowances || 0);
+        // Auto Extract Basic Rate & Values
+        const { dailyBasic, dailyEpfBase, allowances } = extractEmpValues(empObj);
 
-        dailyBasic = isNaN(dailyBasic) ? 0 : dailyBasic;
-        dailyEpfBase = isNaN(dailyEpfBase) ? 0 : dailyEpfBase;
-        allowances = isNaN(allowances) ? 0 : allowances;
-
-        // Attendance Data
+        // Attendance Data (OT, Advance, Loan)
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
