@@ -18,10 +18,8 @@
         .company-header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
         
         /* Print Rules */
-        .print-only { display: none; }
         @media print {
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
             body { background: white !important; font-size: 11pt; }
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
             .payslip-box { border: 1px solid #000 !important; padding: 15px !important; }
@@ -61,7 +59,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Days Worked in Month *</label>
-                <input type="number" id="daysWorked" class="form-control" value="0" min="0" max="31" onchange="calculateSalary()">
+                <input type="number" id="daysWorked" class="form-control" value="0" min="0" max="31" oninput="calculateSalary()">
             </div>
         </div>
     </div>
@@ -93,16 +91,20 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Full Basic Salary (Monthly Rate)</td>
-                        <td class="text-end fw-semibold" id="dispFullBasic">0.00</td>
+                        <td>Daily Basic Rate</td>
+                        <td class="text-end fw-semibold" id="dispDailyBasic">0.00</td>
                     </tr>
                     <tr>
-                        <td>Calculated Basic (For Worked Days: <span id="lblDaysWorked">0</span>/30)</td>
+                        <td>Calculated Basic (<span id="lblDailyBasic">0.00</span> × <span id="lblDaysWorked">0</span> Days)</td>
                         <td class="text-end fw-bold text-primary" id="dispWorkedBasic">0.00</td>
                     </tr>
                     <tr>
                         <td>OT Earnings (<span id="dispOtHours">0.0</span> Hrs @ Rate: <span id="dispOtRate">0.00</span>/Hr)</td>
                         <td class="text-end fw-semibold text-success" id="dispOtAmount">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Allowances</td>
+                        <td class="text-end fw-semibold text-success" id="dispAllowances">0.00</td>
                     </tr>
                     <tr class="table-light fw-bold">
                         <td>GROSS EARNINGS</td>
@@ -191,17 +193,21 @@
     function calculateSalary() {
         const month = document.getElementById('salMonth').value;
         const empId = document.getElementById('salEmpSelect').value;
-        const daysWorkedInput = parseFloat(document.getElementById('daysWorked').value) || 0;
+        let daysWorkedInput = parseFloat(document.getElementById('daysWorked').value);
 
         if (!month || !empId) {
             resetPayslip();
             return;
         }
 
-        const empObj = employees.find(e => e.id === empId);
+        const empObj = employees.find(e => String(e.id) === String(empId));
         if (!empObj) return;
 
-        const basicSalary = parseFloat(empObj.salary) || 0;
+        // Daily Rates from Index Page Data
+        const dailyBasic = parseFloat(empObj.dailyBasic || empObj.salary || 0);
+        const dailyEpfBase = parseFloat(empObj.dailyEpf || 0);
+        const allowances = parseFloat(empObj.allowances || 0);
+
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
@@ -218,44 +224,45 @@
             if (day.status === 'Present') presentDaysCount++;
         });
 
-        // Auto update worked days if input is 0 or user didn't change manually
-        let actualDaysWorked = daysWorkedInput > 0 ? daysWorkedInput : presentDaysCount;
+        // Use input or attendance days
+        let actualDaysWorked = isNaN(daysWorkedInput) || daysWorkedInput === 0 ? presentDaysCount : daysWorkedInput;
         document.getElementById('daysWorked').value = actualDaysWorked;
 
-        // Calculations
-        // 1. Basic Salary based on Days Worked
-        const dailyBasicRate = basicSalary / 30;
-        const workedBasicSalary = dailyBasicRate * actualDaysWorked;
+        // --- CALCULATIONS ---
+        // 1. Basic Portion = Daily Basic * Days Worked
+        const workedBasicSalary = dailyBasic * actualDaysWorked;
 
-        // 2. OT Rate (Basic / 8)
-        const otRate = basicSalary / 8;
+        // 2. OT Rate = Daily Basic / 8
+        const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOtHours;
 
-        // 3. EPF Base = Daily Rate * Days Worked
-        const epfApplicableAmount = dailyBasicRate * actualDaysWorked;
+        // 3. EPF Base = Daily EPF Applicable Amount * Days Worked
+        const epfApplicableAmount = dailyEpfBase * actualDaysWorked;
         const epf8 = epfApplicableAmount * 0.08;
         const epf12 = epfApplicableAmount * 0.12;
         const etf3 = epfApplicableAmount * 0.03;
 
         // 4. Totals
-        const grossEarnings = workedBasicSalary + otEarnings;
+        const grossEarnings = workedBasicSalary + otEarnings + allowances;
         const totalDeductions = epf8 + totalAdvance + totalLoan;
         const netSalary = grossEarnings - totalDeductions;
 
-        // Displaying Values
+        // --- DISPLAYING VALUES ---
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
         document.getElementById('dispEmpId').innerText = empObj.id;
         document.getElementById('dispEmpName').innerText = empObj.name;
         document.getElementById('dispEmpBranch').innerText = empObj.branch;
         document.getElementById('dispDaysWorked').innerText = `${actualDaysWorked} Days`;
+        
+        document.getElementById('dispDailyBasic').innerText = formatLKR(dailyBasic);
+        document.getElementById('lblDailyBasic').innerText = formatLKR(dailyBasic);
         document.getElementById('lblDaysWorked').innerText = actualDaysWorked;
-
-        document.getElementById('dispFullBasic').innerText = formatLKR(basicSalary);
         document.getElementById('dispWorkedBasic').innerText = formatLKR(workedBasicSalary);
         
         document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
         document.getElementById('dispOtRate').innerText = formatLKR(otRate);
         document.getElementById('dispOtAmount').innerText = formatLKR(otEarnings);
+        document.getElementById('dispAllowances').innerText = formatLKR(allowances);
         document.getElementById('dispGrossEarnings').innerText = formatLKR(grossEarnings);
 
         document.getElementById('dispEpfBase').innerText = formatLKR(epfApplicableAmount);
@@ -271,7 +278,7 @@
     }
 
     function formatLKR(val) {
-        return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return (val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function resetPayslip() {
@@ -280,13 +287,16 @@
         document.getElementById('dispEmpName').innerText = '-';
         document.getElementById('dispEmpBranch').innerText = '-';
         document.getElementById('dispDaysWorked').innerText = '0 Days';
-        document.getElementById('lblDaysWorked').innerText = '0';
 
-        document.getElementById('dispFullBasic').innerText = '0.00';
+        document.getElementById('dispDailyBasic').innerText = '0.00';
+        document.getElementById('lblDailyBasic').innerText = '0.00';
+        document.getElementById('lblDaysWorked').innerText = '0';
         document.getElementById('dispWorkedBasic').innerText = '0.00';
+        
         document.getElementById('dispOtHours').innerText = '0.0';
         document.getElementById('dispOtRate').innerText = '0.00';
         document.getElementById('dispOtAmount').innerText = '0.00';
+        document.getElementById('dispAllowances').innerText = '0.00';
         document.getElementById('dispGrossEarnings').innerText = '0.00';
 
         document.getElementById('dispEpfBase').innerText = '0.00';
