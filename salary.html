@@ -216,12 +216,13 @@
         });
     }
 
-    // Direct Extraction for Daily EPF Applicable Amount from Employee Form
+    // 🎯 EPF Applicable Amount එක අල්ලා ගන්නා නිවැරදි Logic එක
     function getEmployeeSalaryDetails(empObj) {
         let dailyBasic = 0;
         let dailyEpf = 0;
         let allowances = 0;
 
+        // Daily Basic සොයා ගැනීම
         const basicKeys = ['dailyBasic', 'dailyBasicSalary', 'daily_basic', 'basicSalary', 'dailyRate', 'rate', 'basic', 'salary', 'dailyPay'];
         for (let k of basicKeys) {
             if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
@@ -230,15 +231,24 @@
             }
         }
 
-        const epfKeys = ['dailyEpfApplicableAmount', 'dailyEpfApplicable', 'dailyEpf', 'dailyEpfAmount', 'daily_epf', 'epfAmount', 'epfBase', 'dailyEpfBase', 'epf'];
-        for (let k of epfKeys) {
-            if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
-                let v = parseFloat(String(empObj[k]).replace(/,/g, ''));
-                if (!isNaN(v) && v >= 0) { dailyEpf = v; break; }
+        // Object එකේ EPF කියල තියෙන ඕනෑම Key එකක අගය (1000) සොයා ගැනීම
+        for (let key in empObj) {
+            let kLower = key.toLowerCase();
+            if (kLower.includes('epf') && !kLower.includes('total') && !kLower.includes('base') && !kLower.includes('deduction')) {
+                let v = parseFloat(String(empObj[key]).replace(/,/g, ''));
+                if (!isNaN(v) && v > 0) {
+                    dailyEpf = v;
+                    break;
+                }
             }
         }
-        if (dailyEpf === 0) dailyEpf = dailyBasic;
 
+        // EPF අගයක් අසූ නොවුවහොත් පමණක් Basic අගය ගනී
+        if (dailyEpf === 0) {
+            dailyEpf = dailyBasic;
+        }
+
+        // Allowances සොයා ගැනීම
         const allowKeys = ['allowances', 'allowance', 'allowanceAmount'];
         for (let k of allowKeys) {
             if (empObj[k] !== undefined && empObj[k] !== null && empObj[k] !== '') {
@@ -304,14 +314,14 @@
             totalLoan += parseFloat(day.loan || 0);
         });
 
-        // Calculations
+        // Basic Salary Calculation (Daily Basic * Days Worked) -> 3000 * 31 = 93,000
         const workedBasicSalary = dailyBasic * daysWorkedVal;
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOtHours;
 
-        // Daily EPF Amount * Days Worked
+        // 🎯 EPF Base Calculation (Daily EPF Applicable Amount * Days Worked) -> 1000 * 31 = 31,000
         const epfApplicableAmount = dailyEpf * daysWorkedVal;
-        const epf8 = epfApplicableAmount * 0.08;
+        const epf8 = epfApplicableAmount * 0.08; // 2,480
         const epf12 = epfApplicableAmount * 0.12;
         const etf3 = epfApplicableAmount * 0.03;
 
@@ -319,7 +329,7 @@
         const totalDeductions = epf8 + totalAdvance + totalLoan;
         const netSalary = grossEarnings - totalDeductions;
 
-        // Display
+        // Display Data
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
         document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId || empObj.employeeId;
         document.getElementById('dispEmpName').innerText = empObj.name;
@@ -354,7 +364,7 @@
         const daysWorked = document.getElementById('daysWorked').value;
 
         if (!empId) {
-            alert("කරුණාකර පළමුව සේවකයෙකු තෝරන්න (Select Employee).");
+            alert("කරුණාකර පළමුව සේවකයෙකු තෝරන්න.");
             return;
         }
 
