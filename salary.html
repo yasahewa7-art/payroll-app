@@ -13,11 +13,9 @@
         .btn-custom { border-radius: 6px; font-weight: 500; }
         .table-dark-custom { background-color: #0f172a; color: white; }
         
-        /* Payslip Design */
         .payslip-box { background: white; border: 2px solid #0f172a; border-radius: 8px; padding: 25px; }
         .company-header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
         
-        /* Print Rules */
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; font-size: 11pt; }
@@ -146,7 +144,7 @@
             <h3 class="fw-bold mb-0 text-primary" id="dispNetSalary">0.00 LKR</h3>
         </div>
 
-        <!-- Employer Contributions (Informational) -->
+        <!-- Employer Contributions -->
         <div class="border p-3 rounded mb-4" style="background-color: #f8f9fa;">
             <h6 class="fw-bold mb-2 text-muted">EMPLOYER CONTRIBUTIONS (NOT DEDUCTED FROM SALARY):</h6>
             <div class="row">
@@ -173,22 +171,22 @@
     let employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
     let attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
 
-    // Set Default Month
+    // Default Current Month
     document.getElementById('salMonth').value = new Date().toISOString().slice(0, 7);
 
     function populateEmployeeDropdown() {
         const empSelect = document.getElementById('salEmpSelect');
         empSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
         
-        let sortedEmployees = [...employees].sort((a, b) => a.name.localeCompare(b.name));
+        let sortedEmployees = [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         sortedEmployees.forEach(emp => {
-            const idVal = emp.id || emp.empId;
-            empSelect.innerHTML += `<option value="${idVal}">${emp.name} (${idVal}) - ${emp.branch}</option>`;
+            const eId = emp.id || emp.empId;
+            empSelect.innerHTML += `<option value="${eId}">${emp.name} (${eId}) - ${emp.branch}</option>`;
         });
     }
 
     function calculateSalary() {
-        // Refresh latest data from localStorage
+        // Refresh Latest LocalStorage
         employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
         attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
 
@@ -201,19 +199,18 @@
             return;
         }
 
-        // Search flexible match for String or Number ID
+        // Find Employee Object flexibly across property names
         const empObj = employees.find(e => String(e.id || e.empId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // Extract daily basic, epf base, allowances safely
-        const dailyBasic = parseFloat(empObj.dailyBasic || empObj.basicSalary || empObj.salary || 0);
-        const dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.epfAmount || 0);
+        // READ ALL POSSIBLE PROPERTY NAMES FROM INDEX PAGE
+        const dailyBasic = parseFloat(empObj.dailyBasic || empObj.basicSalary || empObj.dailyBasicSalary || empObj.salary || 0);
+        const dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.epfAmount || empObj.dailyEpfAmount || 0);
         const allowances = parseFloat(empObj.allowances || 0);
 
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
-        // Calculate OT, Advance & Loan from Attendance Data
         let totalOtHours = 0;
         let totalAdvance = 0;
         let totalLoan = 0;
@@ -226,34 +223,28 @@
             if (day.status === 'Present') presentDaysCount++;
         });
 
-        // Use daysWorked input or present days
-        let actualDaysWorked = isNaN(daysWorkedInput) || daysWorkedInput === 0 ? presentDaysCount : daysWorkedInput;
+        // Determine days worked
+        let actualDaysWorked = (!isNaN(daysWorkedInput) && daysWorkedInput > 0) ? daysWorkedInput : (presentDaysCount > 0 ? presentDaysCount : 31);
         
-        // If user hasn't explicitly set input yet, sync UI value
         if (document.activeElement !== document.getElementById('daysWorked') && (isNaN(daysWorkedInput) || daysWorkedInput === 0)) {
             document.getElementById('daysWorked').value = actualDaysWorked;
         }
 
-        // --- CALCULATIONS ---
-        // 1. Basic Portion = Daily Basic * Days Worked
+        // CALCULATIONS
         const workedBasicSalary = dailyBasic * actualDaysWorked;
-
-        // 2. OT Rate = Daily Basic / 8
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOtHours;
 
-        // 3. EPF Base = Daily EPF Applicable Amount * Days Worked
         const epfApplicableAmount = dailyEpfBase * actualDaysWorked;
         const epf8 = epfApplicableAmount * 0.08;
         const epf12 = epfApplicableAmount * 0.12;
         const etf3 = epfApplicableAmount * 0.03;
 
-        // 4. Totals
         const grossEarnings = workedBasicSalary + otEarnings + allowances;
         const totalDeductions = epf8 + totalAdvance + totalLoan;
         const netSalary = grossEarnings - totalDeductions;
 
-        // --- DISPLAYING VALUES ---
+        // DISPLAY RESULTS
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
         document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId;
         document.getElementById('dispEmpName').innerText = empObj.name;
@@ -314,7 +305,7 @@
         document.getElementById('dispEtf3').innerText = '0.00 LKR';
     }
 
-    // Initial Load
+    // Initialize
     populateEmployeeDropdown();
 </script>
 
