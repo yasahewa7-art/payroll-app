@@ -91,11 +91,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Daily Basic Rate</td>
-                        <td class="text-end fw-semibold" id="dispDailyBasic">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Calculated Basic (<span id="lblDailyBasic">0.00</span> × <span id="lblDaysWorked">0</span> Days)</td>
+                        <td>Basic Salary (<span id="lblDailyBasic">0.00</span> × <span id="lblDaysWorked">0</span> Days)</td>
                         <td class="text-end fw-bold text-primary" id="dispWorkedBasic">0.00</td>
                     </tr>
                     <tr>
@@ -254,7 +250,6 @@
         document.getElementById('dispEmpBranch').innerText = empObj.branch;
         document.getElementById('dispDaysWorked').innerText = `${actualDaysWorked} Days`;
         
-        document.getElementById('dispDailyBasic').innerText = formatLKR(dailyBasic);
         document.getElementById('lblDailyBasic').innerText = formatLKR(dailyBasic);
         document.getElementById('lblDaysWorked').innerText = actualDaysWorked;
         document.getElementById('dispWorkedBasic').innerText = formatLKR(workedBasicSalary);
@@ -288,7 +283,6 @@
         document.getElementById('dispEmpBranch').innerText = '-';
         document.getElementById('dispDaysWorked').innerText = '0 Days';
 
-        document.getElementById('dispDailyBasic').innerText = '0.00';
         document.getElementById('lblDailyBasic').innerText = '0.00';
         document.getElementById('lblDaysWorked').innerText = '0';
         document.getElementById('dispWorkedBasic').innerText = '0.00';
