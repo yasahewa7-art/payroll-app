@@ -13,9 +13,16 @@
         .btn-custom { border-radius: 6px; font-weight: 500; }
         .table-dark-custom { background-color: #0f172a; color: white; }
         
-        .payslip-box { background: white; border: 2px solid #0f172a; border-radius: 8px; padding: 25px; }
+        .payslip-box { background: white; border: 2px solid #0f172a; border-radius: 8px; padding: 30px; }
         .company-header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
         
+        .emp-info-grid {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px 20px;
+        }
+
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; font-size: 11pt; }
@@ -70,38 +77,49 @@
             <span class="badge bg-dark text-white px-3 py-1 fs-6" id="dispMonth">Month: -</span>
         </div>
 
-        <!-- Employee Info -->
-        <div class="row mb-4 fs-6">
-            <div class="col-6 mb-2"><strong>Employee ID:</strong> <span id="dispEmpId">-</span></div>
-            <div class="col-6 mb-2"><strong>Employee Name:</strong> <span id="dispEmpName">-</span></div>
-            <div class="col-6"><strong>Branch:</strong> <span id="dispEmpBranch">-</span></div>
-            <div class="col-6"><strong>Days Worked:</strong> <span id="dispDaysWorked">0 Days</span></div>
+        <!-- Employee Info Section -->
+        <div class="emp-info-grid mb-4">
+            <div class="row g-2 fs-6">
+                <div class="col-md-6"><strong>Employee ID:</strong> <span id="dispEmpId" class="ms-1">-</span></div>
+                <div class="col-md-6"><strong>Employee Name:</strong> <span id="dispEmpName" class="ms-1">-</span></div>
+                <div class="col-md-6"><strong>Branch:</strong> <span id="dispEmpBranch" class="ms-1">-</span></div>
+                <div class="col-md-6"><strong>Total Days Worked:</strong> <span id="dispDaysWorked" class="ms-1 fw-bold text-dark">0 Days</span></div>
+            </div>
         </div>
 
-        <!-- Salary Breakdown Table -->
+        <!-- Earnings Table -->
         <div class="table-responsive mb-4">
             <table class="table table-bordered align-middle">
-                <thead class="table-dark-custom text-center">
+                <thead class="table-dark-custom">
                     <tr>
-                        <th style="width: 50%;">EARNINGS / BASIC DETAILS</th>
-                        <th style="width: 50%;">AMOUNT (LKR)</th>
+                        <th>EARNINGS DETAILS</th>
+                        <th class="text-center" style="width: 25%;">RATE / HOURS</th>
+                        <th class="text-end" style="width: 30%;">AMOUNT (LKR)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Basic Salary (<span id="lblDailyBasic">0.00</span> × <span id="lblDaysWorked">0</span> Days)</td>
+                        <td>
+                            <div class="fw-semibold">Basic Salary</div>
+                            <small class="text-muted">Daily Basic Rate: LKR <span id="lblDailyBasic">0.00</span></small>
+                        </td>
+                        <td class="text-center fw-semibold"><span id="lblDaysWorked">0</span> Days</td>
                         <td class="text-end fw-bold text-primary" id="dispWorkedBasic">0.00</td>
                     </tr>
                     <tr>
-                        <td>OT Earnings (<span id="dispOtHours">0.0</span> Hrs @ Rate: <span id="dispOtRate">0.00</span>/Hr)</td>
+                        <td>
+                            <div class="fw-semibold">Overtime (OT) Earnings</div>
+                            <small class="text-muted">OT Rate: LKR <span id="dispOtRate">0.00</span> / Hr</small>
+                        </td>
+                        <td class="text-center fw-semibold"><span id="dispOtHours">0.0</span> Hrs</td>
                         <td class="text-end fw-semibold text-success" id="dispOtAmount">0.00</td>
                     </tr>
                     <tr>
-                        <td>Allowances</td>
+                        <td colspan="2" class="fw-semibold">Allowances</td>
                         <td class="text-end fw-semibold text-success" id="dispAllowances">0.00</td>
                     </tr>
-                    <tr class="table-light fw-bold">
-                        <td>GROSS EARNINGS</td>
+                    <tr class="table-light fw-bold fs-6">
+                        <td colspan="2" class="text-uppercase">Gross Earnings</td>
                         <td class="text-end text-success fs-6" id="dispGrossEarnings">0.00</td>
                     </tr>
                 </tbody>
@@ -111,27 +129,31 @@
         <!-- Deductions Table -->
         <div class="table-responsive mb-4">
             <table class="table table-bordered align-middle">
-                <thead class="table-dark-custom text-center">
+                <thead class="table-dark-custom">
                     <tr>
-                        <th style="width: 50%;">DEDUCTIONS</th>
-                        <th style="width: 50%;">AMOUNT (LKR)</th>
+                        <th>DEDUCTIONS DETAILS</th>
+                        <th class="text-center" style="width: 25%;">BASIS</th>
+                        <th class="text-end" style="width: 30%;">AMOUNT (LKR)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>EPF 8% (Base: <span id="dispEpfBase">0.00</span>)</td>
+                        <td>
+                            <div class="fw-semibold">EPF (Employee Contribution 8%)</div>
+                        </td>
+                        <td class="text-center small text-muted">Base: LKR <span id="dispEpfBase">0.00</span></td>
                         <td class="text-end fw-semibold text-danger" id="dispEpf8">0.00</td>
                     </tr>
                     <tr>
-                        <td>Advance Deductions</td>
+                        <td colspan="2">Salary Advance Deductions</td>
                         <td class="text-end fw-semibold text-danger" id="dispAdvance">0.00</td>
                     </tr>
                     <tr>
-                        <td>Loan Deductions</td>
+                        <td colspan="2">Loan Deductions</td>
                         <td class="text-end fw-semibold text-danger" id="dispLoan">0.00</td>
                     </tr>
-                    <tr class="table-light fw-bold">
-                        <td>TOTAL DEDUCTIONS</td>
+                    <tr class="table-light fw-bold fs-6">
+                        <td colspan="2" class="text-uppercase">Total Deductions</td>
                         <td class="text-end text-danger fs-6" id="dispTotalDeductions">0.00</td>
                     </tr>
                 </tbody>
@@ -139,17 +161,17 @@
         </div>
 
         <!-- Net Salary Summary -->
-        <div class="p-3 bg-light border rounded d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold mb-0 text-dark">NET SALARY (PAYABLE):</h4>
+        <div class="p-3 bg-light border rounded d-flex justify-content-between align-items-center mb-4" style="border-left: 5px solid #0d6efd !important;">
+            <h4 class="fw-bold mb-0 text-dark text-uppercase">Net Salary (Payable):</h4>
             <h3 class="fw-bold mb-0 text-primary" id="dispNetSalary">0.00 LKR</h3>
         </div>
 
         <!-- Employer Contributions -->
         <div class="border p-3 rounded mb-4" style="background-color: #f8f9fa;">
-            <h6 class="fw-bold mb-2 text-muted">EMPLOYER CONTRIBUTIONS (NOT DEDUCTED FROM SALARY):</h6>
-            <div class="row">
-                <div class="col-6"><strong>EPF 12%:</strong> <span id="dispEpf12">0.00 LKR</span></div>
-                <div class="col-6"><strong>ETF 3%:</strong> <span id="dispEtf3">0.00 LKR</span></div>
+            <h6 class="fw-bold mb-2 text-muted text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;">Employer Contributions (Not Deducted From Salary):</h6>
+            <div class="row fs-6">
+                <div class="col-6"><strong>EPF (12%):</strong> <span id="dispEpf12" class="ms-1 fw-semibold">0.00 LKR</span></div>
+                <div class="col-6"><strong>ETF (3%):</strong> <span id="dispEtf3" class="ms-1 fw-semibold">0.00 LKR</span></div>
             </div>
         </div>
 
@@ -204,7 +226,6 @@
             return;
         }
 
-        // Attendance එකෙන් පැමිණි දින ගණන සොයාබැලීම
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
         let presentDaysCount = 0;
@@ -213,9 +234,7 @@
             if (day.status === 'Present') presentDaysCount++;
         });
 
-        // Attendance හි දත්ත තිබේ නම් එම දින ගණන ද, නැතිනම් 31 default ලෙස දායි
         document.getElementById('daysWorked').value = presentDaysCount > 0 ? presentDaysCount : 31;
-        
         calculateSalary();
     }
 
@@ -225,7 +244,6 @@
         const month = document.getElementById('salMonth').value;
         const empId = document.getElementById('salEmpSelect').value;
         
-        // Days Worked Input field එකෙන් අගය කෙලින්ම ගනියි
         let daysWorkedVal = parseFloat(document.getElementById('daysWorked').value);
         if (isNaN(daysWorkedVal) || daysWorkedVal < 0) {
             daysWorkedVal = 0;
@@ -236,11 +254,10 @@
             return;
         }
 
-        // සේවකයාගේ විස්තර සොයාගැනීම
         const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // Key Names කියවීම
+        // Key Names Reading
         let dailyBasic = parseFloat(empObj.dailyBasic || empObj.daily_basic || empObj.basicSalary || empObj.dailyBasicSalary || empObj.salary || 0);
         let dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.daily_epf || empObj.epfAmount || empObj.dailyEpfAmount || 0);
         let allowances = parseFloat(empObj.allowances || 0);
@@ -249,7 +266,7 @@
         dailyEpfBase = isNaN(dailyEpfBase) ? 0 : dailyEpfBase;
         allowances = isNaN(allowances) ? 0 : allowances;
 
-        // Attendance Data (OT, Advance, Loan)
+        // Attendance Data
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
@@ -263,7 +280,7 @@
             totalLoan += parseFloat(day.loan || 0);
         });
 
-        // ගණනය කිරීම් (Calculations)
+        // Calculations
         const workedBasicSalary = dailyBasic * daysWorkedVal;
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOtHours;
@@ -277,7 +294,7 @@
         const totalDeductions = epf8 + totalAdvance + totalLoan;
         const netSalary = grossEarnings - totalDeductions;
 
-        // පඩිපතට Data ලිවීම (Display Output)
+        // Display Outputs
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
         document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId || empObj.employeeId;
         document.getElementById('dispEmpName').innerText = empObj.name;
@@ -338,7 +355,7 @@
         document.getElementById('dispEtf3').innerText = '0.00 LKR';
     }
 
-    // Load Data On Startup
+    // Initialize Page
     populateEmployeeDropdown();
 </script>
 
