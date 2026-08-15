@@ -168,27 +168,35 @@
 </div>
 
 <script>
-    let employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
-    let attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
+    let employees = [];
+    let attendanceData = {};
 
     // Default Current Month
     document.getElementById('salMonth').value = new Date().toISOString().slice(0, 7);
 
+    function loadDataFromStorage() {
+        // Search across all common keys used in payroll apps
+        employees = JSON.parse(localStorage.getItem('payroll_employees')) || 
+                    JSON.parse(localStorage.getItem('employees')) || [];
+                    
+        attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || 
+                         JSON.parse(localStorage.getItem('attendance')) || {};
+    }
+
     function populateEmployeeDropdown() {
+        loadDataFromStorage();
         const empSelect = document.getElementById('salEmpSelect');
         empSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
         
         let sortedEmployees = [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         sortedEmployees.forEach(emp => {
-            const eId = emp.id || emp.empId;
+            const eId = emp.id || emp.empId || emp.employeeId;
             empSelect.innerHTML += `<option value="${eId}">${emp.name} (${eId}) - ${emp.branch}</option>`;
         });
     }
 
     function calculateSalary() {
-        // Refresh Latest LocalStorage
-        employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
-        attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
+        loadDataFromStorage();
 
         const month = document.getElementById('salMonth').value;
         const empId = document.getElementById('salEmpSelect').value;
@@ -199,15 +207,37 @@
             return;
         }
 
-        // Find Employee Object flexibly across property names
-        const empObj = employees.find(e => String(e.id || e.empId).trim() === String(empId).trim());
+        // Find Employee Object by ID flexibly
+        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
         if (!empObj) return;
 
-        // READ ALL POSSIBLE PROPERTY NAMES FROM INDEX PAGE
-        const dailyBasic = parseFloat(empObj.dailyBasic || empObj.basicSalary || empObj.dailyBasicSalary || empObj.salary || 0);
-        const dailyEpfBase = parseFloat(empObj.dailyEpf || empObj.epfAmount || empObj.dailyEpfAmount || 0);
-        const allowances = parseFloat(empObj.allowances || 0);
+        // READ ALL POSSIBLE PROPERTY NAMES FOR DAILY BASIC & EPF
+        let dailyBasic = 0;
+        let dailyEpfBase = 0;
+        let allowances = 0;
 
+        // Extract Daily Basic
+        if (empObj.dailyBasic !== undefined) dailyBasic = parseFloat(empObj.dailyBasic);
+        else if (empObj.daily_basic !== undefined) dailyBasic = parseFloat(empObj.daily_basic);
+        else if (empObj.basicSalary !== undefined) dailyBasic = parseFloat(empObj.basicSalary);
+        else if (empObj.dailyBasicSalary !== undefined) dailyBasic = parseFloat(empObj.dailyBasicSalary);
+        else if (empObj.salary !== undefined) dailyBasic = parseFloat(empObj.salary);
+
+        // Extract Daily EPF
+        if (empObj.dailyEpf !== undefined) dailyEpfBase = parseFloat(empObj.dailyEpf);
+        else if (empObj.daily_epf !== undefined) dailyEpfBase = parseFloat(empObj.daily_epf);
+        else if (empObj.epfAmount !== undefined) dailyEpfBase = parseFloat(empObj.epfAmount);
+        else if (empObj.dailyEpfAmount !== undefined) dailyEpfBase = parseFloat(empObj.dailyEpfAmount);
+
+        // Extract Allowances
+        if (empObj.allowances !== undefined) allowances = parseFloat(empObj.allowances);
+
+        // Sanitize values
+        dailyBasic = isNaN(dailyBasic) ? 0 : dailyBasic;
+        dailyEpfBase = isNaN(dailyEpfBase) ? 0 : dailyEpfBase;
+        allowances = isNaN(allowances) ? 0 : allowances;
+
+        // Search Attendance
         const key = `${empId}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
@@ -223,7 +253,7 @@
             if (day.status === 'Present') presentDaysCount++;
         });
 
-        // Determine days worked
+        // Determine days worked (defaulting to 31 if nothing entered or logged)
         let actualDaysWorked = (!isNaN(daysWorkedInput) && daysWorkedInput > 0) ? daysWorkedInput : (presentDaysCount > 0 ? presentDaysCount : 31);
         
         if (document.activeElement !== document.getElementById('daysWorked') && (isNaN(daysWorkedInput) || daysWorkedInput === 0)) {
@@ -246,7 +276,7 @@
 
         // DISPLAY RESULTS
         document.getElementById('dispMonth').innerText = `Month: ${month}`;
-        document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId;
+        document.getElementById('dispEmpId').innerText = empObj.id || empObj.empId || empObj.employeeId;
         document.getElementById('dispEmpName').innerText = empObj.name;
         document.getElementById('dispEmpBranch').innerText = empObj.branch;
         document.getElementById('dispDaysWorked').innerText = `${actualDaysWorked} Days`;
@@ -305,7 +335,7 @@
         document.getElementById('dispEtf3').innerText = '0.00 LKR';
     }
 
-    // Initialize
+    // Initialize Page
     populateEmployeeDropdown();
 </script>
 
