@@ -324,10 +324,11 @@
         const otEarnings = otRate * totalOtHours;
 
         // 🎯 EPF Base Calculation (Daily EPF Applicable Amount * Days Worked) -> 1000 * 31 = 31,000
-        const epfApplicableAmount = dailyEpf * daysWorkedVal;
-        const epf8 = epfApplicableAmount * 0.08; // 2,480
-        const epf12 = epfApplicableAmount * 0.12;
-        const etf3 = epfApplicableAmount * 0.03;
+       const dailyEpfVal = parseFloat(dailyEpf) || 0;
+        const epfApplicableAmount = dailyEpfVal > 0 ? (dailyEpfVal * daysworkedVal) : 0;
+        const epf8 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.08) : 0;
+        const epf12 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.12) : 0;
+        const etf3 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.03) : 0;
 
         const grossEarnings = workedBasicSalary + otEarnings + allowances;
         const totalDeductions = epf8 + totalAdvance + totalLoan;
