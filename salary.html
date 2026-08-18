@@ -161,7 +161,9 @@
 
     function loadDataFromStorage() {
         try {
-            employees = JSON.parse(localStorage.getItem('employees') || '[]');
+            // Check all possible keys used in index.html
+            const empRaw = localStorage.getItem('employees') || localStorage.getItem('employeeList') || localStorage.getItem('empRecords') || '[]';
+            employees = JSON.parse(empRaw);
             attendanceData = JSON.parse(localStorage.getItem('attendance') || '{}');
         } catch (e) {
             employees = [];
@@ -179,15 +181,20 @@
         if (!select) return;
         select.innerHTML = '<option value="">-- Select Employee --</option>';
 
-        employees.forEach(emp => {
-            const id = emp.id || emp.empId || emp.employeeId || '';
-            const name = emp.name || emp.empName || emp.employeeName || '';
-            const branch = emp.branch || emp.empBranch || '';
-            const opt = document.createElement('option');
-            opt.value = id;
-            opt.textContent = `${name} (${id}) - ${branch}`;
-            select.appendChild(opt);
-        });
+        if (Array.isArray(employees)) {
+            employees.forEach(emp => {
+                const id = emp.id || emp.empId || emp.employeeId || emp.idNumber || '';
+                const name = emp.name || emp.empName || emp.employeeName || 'Unknown';
+                const branch = emp.branch || emp.empBranch || '';
+                
+                if (id || name !== 'Unknown') {
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = `${name} (${id}) ${branch ? '- ' + branch : ''}`;
+                    select.appendChild(opt);
+                }
+            });
+        }
 
         const now = new Date();
         const year = now.getFullYear();
@@ -263,7 +270,7 @@
             return;
         }
 
-        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
+        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId || e.idNumber).trim() === String(empId).trim());
         if (!empObj) return;
 
         let dailyBasic = parseFloat(empObj.basicSalary || empObj.dailyBasic || empObj.basic || 0);
@@ -287,7 +294,7 @@
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOTHours;
 
-        // Daily EPF එක 0 නම් EPF ගණනය නොවේ
+        // Daily EPF එක 0 නම් කැපෙන්නේ නැත
         const epfApplicableAmount = dailyEpf > 0 ? (dailyEpf * daysworkedVal) : 0;
         const epf8 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.08) : 0;
         const epf12 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.12) : 0;
