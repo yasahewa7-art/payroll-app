@@ -153,9 +153,8 @@
 
 <script>
     let employees = [];
-    let attendanceData = {};
 
-    function loadDataFromStorage() {
+    function loadEmployeesFromStorage() {
         try {
             const keysToTry = ['employees', 'employeeList', 'empRecords', 'staffData', 'employeeData', 'mainEmployees'];
             let foundEmps = null;
@@ -173,7 +172,6 @@
             if (!foundEmps) {
                 for (let i = 0; i < localStorage.length; i++) {
                     let key = localStorage.key(i);
-                    if (key === 'attendance' || key === 'attendanceData') continue;
                     try {
                         let parsed = JSON.parse(localStorage.getItem(key));
                         if (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].name || parsed[0].empName || parsed[0].id)) {
@@ -185,12 +183,8 @@
             }
 
             employees = foundEmps || [];
-            
-            const attRaw = localStorage.getItem('attendance') || localStorage.getItem('attendanceData') || '{}';
-            attendanceData = JSON.parse(attRaw);
         } catch (e) {
             employees = [];
-            attendanceData = {};
         }
     }
 
@@ -199,7 +193,7 @@
     }
 
     function initPage() {
-        loadDataFromStorage();
+        loadEmployeesFromStorage();
         const select = document.getElementById('salEmpSelect');
         if (!select) return;
         select.innerHTML = '<option value="">-- Select Employee --</option>';
@@ -253,44 +247,73 @@
         setText('dispNetSalary', '0.00');
     }
 
+    // Attendance Data එක 100% ක් නිවැරදිව Read කරන ශ්‍රිතය
     function getAttendanceDetails(empId, month) {
         let totalDays = 0;
         let totalOTHours = 0;
         let totalAdvance = 0;
         let totalLoan = 0;
 
-        if (!attendanceData) return { totalDays, totalOTHours, totalAdvance, totalLoan };
+        const targetEmpId = String(empId).trim();
+        const targetMonth = String(month).trim(); // e.g. "2026-08"
 
-        // Attendance data එකෙන් ගණනය කිරීම
-        const key = `${empId}_${month}`;
-        if (attendanceData[key]) {
-            const monthObj = attendanceData[key];
-            Object.values(monthObj).forEach(day => {
-                const status = (day.status || day.attendance || '').toString().toLowerCase().trim();
-                if (status === 'present') totalDays += 1;
-                else if (status === 'half day' || status === 'halfday') totalDays += 0.5;
+        // LocalStorage එකේ ඇති සියලුම Keys පරික්ෂා කිරීම
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            let rawData = localStorage.getItem(key);
+            if (!rawData) continue;
 
-                totalOTHours += parseFloat(day.otHours || day.ot || 0) || 0;
-                totalAdvance += parseFloat(day.advance || day.advanceAmount || 0) || 0;
-                totalLoan += parseFloat(day.loan || day.loanAmount || 0) || 0;
-            });
-        } else {
-            let records = Array.isArray(attendanceData) ? attendanceData : Object.values(attendanceData);
-            records.forEach(rec => {
-                if (!rec || typeof rec !== 'object') return;
-                const rEmp = (rec.empId || rec.employeeId || rec.id || '').toString().trim();
-                const rDate = (rec.date || rec.day || rec.month || '').toString().trim();
+            try {
+                let data = JSON.parse(rawData);
 
-                if (rEmp === String(empId).trim() && rDate.startsWith(month)) {
-                    const status = (rec.status || rec.attendance || '').toString().toLowerCase().trim();
-                    if (status === 'present') totalDays += 1;
-                    else if (status === 'half day' || status === 'halfday') totalDays += 0.5;
+                // Structure 1: key = "attendance" හෝ "attendanceData"
+                if (key.toLowerCase().includes('attendance')) {
+                    // Check direct key like "12201_2026-08"
+                    let compositeKey = `${targetEmpId}_${targetMonth}`;
+                    if (data[compositeKey]) {
+                        let records = data[compositeKey];
+                        Object.values(records).forEach(item => {
+                            if (!item) return;
+                            let st = String(item.status || item.attendance || '').toLowerCase();
+                            if (st.includes('present') || st === 'p' || st === 'full') totalDays += 1;
+                            else if (st.includes('half')) totalDays += 0.5;
 
-                    totalOTHours += parseFloat(rec.otHours || rec.ot || 0) || 0;
-                    totalAdvance += parseFloat(rec.advance || rec.advanceAmount || 0) || 0;
-                    totalLoan += parseFloat(rec.loan || rec.loanAmount || 0) || 0;
+                            totalOTHours += parseFloat(item.otHours || item.ot || 0) || 0;
+                            totalAdvance += parseFloat(item.advance || item.advanceAmount || 0) || 0;
+                            totalLoan += parseFloat(item.loan || item.loanAmount || 0) || 0;
+                        });
+                    } else if (Array.isArray(data)) {
+                        data.forEach(item => {
+                            let itemEmp = String(item.empId || item.employeeId || item.id || '').trim();
+                            let itemDate = String(item.date || item.day || item.month || '').trim();
+                            if (itemEmp === targetEmpId && itemDate.includes(targetMonth)) {
+                                let st = String(item.status || item.attendance || '').toLowerCase();
+                                if (st.includes('present') || st === 'p' || st === 'full') totalDays += 1;
+                                else if (st.includes('half')) totalDays += 0.5;
+
+                                totalOTHours += parseFloat(item.otHours || item.ot || 0) || 0;
+                                totalAdvance += parseFloat(item.advance || item.advanceAmount || 0) || 0;
+                                totalLoan += parseFloat(item.loan || item.loanAmount || 0) || 0;
+                            }
+                        });
+                    }
                 }
-            });
+
+                // Structure 2: Direct key matched e.g. "12201_2026-08" or key contains empId and month
+                if (key.includes(targetEmpId) && key.includes(targetMonth)) {
+                    let records = Array.isArray(data) ? data : Object.values(data);
+                    records.forEach(item => {
+                        if (!item) return;
+                        let st = String(item.status || item.attendance || '').toLowerCase();
+                        if (st.includes('present') || st === 'p' || st === 'full') totalDays += 1;
+                        else if (st.includes('half')) totalDays += 0.5;
+
+                        totalOTHours += parseFloat(item.otHours || item.ot || 0) || 0;
+                        totalAdvance += parseFloat(item.advance || item.advanceAmount || 0) || 0;
+                        totalLoan += parseFloat(item.loan || item.loanAmount || 0) || 0;
+                    });
+                }
+            } catch (e) {}
         }
 
         return { totalDays, totalOTHours, totalAdvance, totalLoan };
@@ -301,7 +324,7 @@
     }
 
     function calculateSalary() {
-        loadDataFromStorage();
+        loadEmployeesFromStorage();
 
         const month = document.getElementById('salMonth')?.value;
         const empId = document.getElementById('salEmpSelect')?.value;
@@ -321,7 +344,7 @@
         let dailyEpf = parseFloat(empObj.epfSalary || empObj.dailyEpf || 0);
         let allowances = parseFloat(empObj.allowances || empObj.allowance || 0);
 
-        // Attendance එකෙන් Auto Fetch වේ
+        // Attendance Details Fetching
         const attInfo = getAttendanceDetails(empId, month);
         const daysworkedVal = attInfo.totalDays;
         const totalOTHours = attInfo.totalOTHours;
@@ -332,7 +355,6 @@
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOTHours;
 
-        // Daily EPF එක 0 නම් කැපෙන්නේ නැත
         const epfApplicableAmount = dailyEpf > 0 ? (dailyEpf * daysworkedVal) : 0;
         const epf8 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.08) : 0;
         const epf12 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.12) : 0;
@@ -367,7 +389,7 @@
         setText('lblEpfApplicable', formatLKR(epfApplicableAmount));
         setText('dispEpf8', formatLKR(epf8));
         setText('dispEpf12', formatLKR(epf12));
-        setText('dispEtf3', formatLKR(etf3));
+        setText('dispEtf3', formatLKR(epf12));
 
         setText('dispAdvance', formatLKR(totalAdvance));
         setText('dispLoan', formatLKR(totalLoan));
