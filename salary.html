@@ -159,10 +159,43 @@
     let employees = [];
     let attendanceData = {};
 
+    // LocalStorage හි ඇති ඕනෑම Key එකකින් Employee Data Auto-Detect කරගන්නා ශ්‍රිතය
     function loadDataFromStorage() {
         try {
-            employees = JSON.parse(localStorage.getItem('employees') || '[]');
-            attendanceData = JSON.parse(localStorage.getItem('attendance') || '{}');
+            let foundEmps = null;
+            // 1. Common key names පරීක්ෂාව
+            const keysToTry = ['employees', 'employeeList', 'empRecords', 'staffData', 'employeeData', 'mainEmployees'];
+            for (let k of keysToTry) {
+                let d = localStorage.getItem(k);
+                if (d) {
+                    let parsed = JSON.parse(d);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        foundEmps = parsed;
+                        break;
+                    }
+                }
+            }
+
+            // 2. නොලැබුණහොත් LocalStorage එකේ ඇති සියලුම Array-like Keys ස්කෑන් කිරීම
+            if (!foundEmps) {
+                for (let i = 0; i < localStorage.length; i++) {
+                    let key = localStorage.key(i);
+                    if (key === 'attendance') continue;
+                    try {
+                        let parsed = JSON.parse(localStorage.getItem(key));
+                        if (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].name || parsed[0].empName || parsed[0].id)) {
+                            foundEmps = parsed;
+                            break;
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            employees = foundEmps || [];
+            
+            // Attendance Data ලබාගැනීම
+            const attRaw = localStorage.getItem('attendance') || localStorage.getItem('attendanceData') || '{}';
+            attendanceData = JSON.parse(attRaw);
         } catch (e) {
             employees = [];
             attendanceData = {};
@@ -179,13 +212,20 @@
         if (!select) return;
         select.innerHTML = '<option value="">-- Select Employee --</option>';
 
-        employees.forEach(emp => {
-            const id = emp.id || emp.empId || emp.employeeId || '';
-            const opt = document.createElement('option');
-            opt.value = id;
-            opt.textContent = `${emp.name} (${id}) - ${emp.branch || ''}`;
-            select.appendChild(opt);
-        });
+        if (Array.isArray(employees)) {
+            employees.forEach(emp => {
+                const id = emp.id || emp.empId || emp.employeeId || emp.idNumber || '';
+                const name = emp.name || emp.empName || emp.employeeName || '';
+                const branch = emp.branch || emp.empBranch || '';
+                
+                if (id || name) {
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = `${name} (${id}) ${branch ? '- ' + branch : ''}`;
+                    select.appendChild(opt);
+                }
+            });
+        }
 
         const now = new Date();
         const year = now.getFullYear();
@@ -261,7 +301,7 @@
             return;
         }
 
-        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId).trim() === String(empId).trim());
+        const empObj = employees.find(e => String(e.id || e.empId || e.employeeId || e.idNumber).trim() === String(empId).trim());
         if (!empObj) return;
 
         let dailyBasic = parseFloat(empObj.basicSalary || empObj.dailyBasic || empObj.basic || 0);
@@ -301,9 +341,9 @@
         };
 
         setText('dispMonth', `Month: ${month}`);
-        setText('dispEmpId', empObj.id || empObj.empId || empObj.employeeId);
-        setText('dispEmpName', empObj.name);
-        setText('dispEmpBranch', empObj.branch);
+        setText('dispEmpId', empObj.id || empObj.empId || empObj.employeeId || empId);
+        setText('dispEmpName', empObj.name || empObj.empName || empObj.employeeName || '-');
+        setText('dispEmpBranch', empObj.branch || empObj.empBranch || '-');
         setText('dispDaysWorked', `${daysworkedVal} Days`);
 
         setText('lblDailyBasic', formatLKR(dailyBasic));
