@@ -274,11 +274,15 @@
         const monthAttendance = attendanceData[key] || {};
         let presentDaysCount = 0;
 
-        Object.values(monthAttendance).forEach(day => {
-            if (day.status === 'Present') presentDaysCount++;
+       Object.values(monthAttendance).forEach(day => {
+            if (day.status === 'Present') {
+                presentDaysCount += 1;
+            } else if (day.status === 'Half Day') {
+                presentDaysCount += 0.5;
+            }
         });
 
-        document.getElementById('daysWorked').value = presentDaysCount > 0 ? presentDaysCount : 31;
+        document.getElementById('daysWorked').value = presentDaysCount > 0 ? presentDaysCount : 0;
         calculateSalary();
     }
 
