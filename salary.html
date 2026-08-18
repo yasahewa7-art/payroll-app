@@ -247,7 +247,6 @@
         setText('dispNetSalary', '0.00');
     }
 
-    // Attendance Data එක 100% ක් නිවැරදිව Read කරන ශ්‍රිතය
     function getAttendanceDetails(empId, month) {
         let totalDays = 0;
         let totalOTHours = 0;
@@ -255,9 +254,8 @@
         let totalLoan = 0;
 
         const targetEmpId = String(empId).trim();
-        const targetMonth = String(month).trim(); // e.g. "2026-08"
+        const targetMonth = String(month).trim();
 
-        // LocalStorage එකේ ඇති සියලුම Keys පරික්ෂා කිරීම
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
             let rawData = localStorage.getItem(key);
@@ -266,9 +264,7 @@
             try {
                 let data = JSON.parse(rawData);
 
-                // Structure 1: key = "attendance" හෝ "attendanceData"
                 if (key.toLowerCase().includes('attendance')) {
-                    // Check direct key like "12201_2026-08"
                     let compositeKey = `${targetEmpId}_${targetMonth}`;
                     if (data[compositeKey]) {
                         let records = data[compositeKey];
@@ -299,7 +295,6 @@
                     }
                 }
 
-                // Structure 2: Direct key matched e.g. "12201_2026-08" or key contains empId and month
                 if (key.includes(targetEmpId) && key.includes(targetMonth)) {
                     let records = Array.isArray(data) ? data : Object.values(data);
                     records.forEach(item => {
@@ -341,10 +336,12 @@
         }
 
         let dailyBasic = parseFloat(empObj.basicSalary || empObj.dailyBasic || empObj.basic || 0);
-        let dailyEpf = parseFloat(empObj.epfSalary || empObj.dailyEpf || 0);
+        
+        // Daily EPF Rate එක ලබා ගැනීම (නැත්නම් 0 වේ)
+        let dailyEpf = parseFloat(empObj.epfSalary || empObj.dailyEpf || empObj.epfApplicableAmount || 0) || 0;
         let allowances = parseFloat(empObj.allowances || empObj.allowance || 0);
 
-        // Attendance Details Fetching
+        // Attendance Details
         const attInfo = getAttendanceDetails(empId, month);
         const daysworkedVal = attInfo.totalDays;
         const totalOTHours = attInfo.totalOTHours;
@@ -355,6 +352,7 @@
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOTHours;
 
+        // Daily EPF එක ඇතුළත් කර තිබේ නම් පමණක් EPF ගණනය වේ
         const epfApplicableAmount = dailyEpf > 0 ? (dailyEpf * daysworkedVal) : 0;
         const epf8 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.08) : 0;
         const epf12 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.12) : 0;
@@ -389,7 +387,7 @@
         setText('lblEpfApplicable', formatLKR(epfApplicableAmount));
         setText('dispEpf8', formatLKR(epf8));
         setText('dispEpf12', formatLKR(epf12));
-        setText('dispEtf3', formatLKR(epf12));
+        setText('dispEtf3', formatLKR(etf3));
 
         setText('dispAdvance', formatLKR(totalAdvance));
         setText('dispLoan', formatLKR(totalLoan));
