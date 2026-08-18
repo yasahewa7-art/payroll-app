@@ -205,9 +205,10 @@
                     <td><input type="time" id="out_${dateStr}" class="form-control form-control-sm text-center" value="${dayRecord.out || ''}" onchange="updateRow('${key}', '${dateStr}')"></td>
                     <td>
                         <select id="status_${dateStr}" class="form-select form-select-sm" onchange="updateRow('${key}', '${dateStr}')">
-                            <option value="Present" ${dayRecord.status === 'Present' ? 'selected' : ''}>Present</option>
-                            <option value="Absent" ${dayRecord.status === 'Absent' ? 'selected' : ''}>Absent</option>
-                            <option value="Off Day" ${dayRecord.status === 'Off Day' ? 'selected' : ''}>Off Day</option>
+                           <option value="Present" ${dayRecord.status === 'Present' ? 'selected' : ''}>Present</option>
+<option value="Half Day" ${dayRecord.status === 'Half Day' ? 'selected' : ''}>Half Day</option>
+<option value="Absent" ${dayRecord.status === 'Absent' ? 'selected' : ''}>Absent</option>
+<option value="Off Day" ${dayRecord.status === 'Off Day' ? 'selected' : ''}>Off Day</option>
                         </select>
                     </td>
                     <td><span class="badge ${dayRecord.ot > 0 ? 'bg-primary' : 'bg-secondary'} fs-6">${dayRecord.ot || 0} Hrs</span></td>
