@@ -17,7 +17,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="initPage()">
 
 <div class="container my-4">
     <!-- Employee & Month Selection -->
@@ -167,7 +167,8 @@
         const select = document.getElementById('salEmpSelect');
         select.innerHTML = '<option value="">-- Select Employee --</option>';
 
-        employees.forEach(emp => {
+        let sortedEmployees = [...employees].sort((a, b) => a.name.localeCompare(b.name));
+        sortedEmployees.forEach(emp => {
             const opt = document.createElement('option');
             opt.value = emp.id;
             opt.textContent = `${emp.name} (${emp.id}) - ${emp.branch || ''}`;
@@ -209,53 +210,27 @@
         let totalDays = 0, totalOTHours = 0, totalAdvance = 0, totalLoan = 0, totalDailyAllowance = 0;
         const targetId = String(empId).trim();
         const targetM = String(month).trim();
+        
+        const key = `${targetId}_${targetM}`;
+        const allAttendance = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
+        const monthData = allAttendance[key] || {};
 
-        function processRecord(item) {
-            if (!item || typeof item !== 'object') return;
+        Object.keys(monthData).forEach(dateStr => {
+            const item = monthData[dateStr];
+            if (!item) return;
 
-            let itemEmp = String(item.empId || item.employeeId || item.id || item.emp_id || '').trim();
-            let itemDate = String(item.date || item.month || item.attDate || item.day || '').trim();
-
-            if ((itemEmp === targetId || !itemEmp) && (itemDate.includes(targetM) || !itemDate)) {
-                let st = String(item.status || item.attendance || item.type || '').toLowerCase();
-                
-                if (st.includes('present') || st === 'p' || st === 'full' || st === '1') {
-                    totalDays += 1;
-                } else if (st.includes('half') || st === '0.5' || st === 'h') {
-                    totalDays += 0.5;
-                } else if (parseFloat(item.daysWorked || item.days || 0) > 0) {
-                    totalDays += parseFloat(item.daysWorked || item.days);
-                }
-
-                totalOTHours += parseFloat(item.otHours || item.ot || item.overtime || 0) || 0;
-                totalAdvance += parseFloat(item.advance || item.salaryAdvance || item.advanceAmount || 0) || 0;
-                totalLoan += parseFloat(item.loan || item.loanAmount || 0) || 0;
-                totalDailyAllowance += parseFloat(item.allowance || item.dailyAllowance || 0) || 0;
+            let st = String(item.status || '').toLowerCase();
+            
+            if (st === 'present') {
+                totalDays += 1;
+            } else if (st === 'half day') {
+                totalDays += 0.5;
             }
-        }
 
-        for (let i = 0; i < localStorage.length; i++) {
-            let key = localStorage.key(i);
-            if (key === 'payroll_employees') continue;
-
-            try {
-                let rawData = localStorage.getItem(key);
-                if (!rawData) continue;
-                let data = JSON.parse(rawData);
-
-                if (Array.isArray(data)) {
-                    data.forEach(item => processRecord(item));
-                } else if (typeof data === 'object' && data !== null) {
-                    Object.values(data).forEach(val => {
-                        if (Array.isArray(val)) {
-                            val.forEach(item => processRecord(item));
-                        } else if (typeof val === 'object' && val !== null) {
-                            processRecord(val);
-                        }
-                    });
-                }
-            } catch (e) {}
-        }
+            totalOTHours += parseFloat(item.ot || 0) || 0;
+            totalAdvance += parseFloat(item.advance || 0) || 0;
+            totalLoan += parseFloat(item.loan || 0) || 0;
+        });
 
         return { totalDays, totalOTHours, totalAdvance, totalLoan, totalDailyAllowance };
     }
@@ -281,7 +256,6 @@
         const otEarnings = otRate * att.totalOTHours;
         const totalAllowances = fixedAllowance + att.totalDailyAllowance;
 
-        // EPF Calculation: Daily EPF × Days Worked
         const epfBase = dailyEpf * daysWorked;
         const epf8 = epfBase * 0.08;
         const epf12 = epfBase * 0.12;
@@ -321,8 +295,6 @@
 
         setText('dispNetSalary', formatLKR(net));
     }
-
-    document.addEventListener('DOMContentLoaded', initPage);
 </script>
 </body>
 </html>
