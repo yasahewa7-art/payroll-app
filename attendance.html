@@ -157,6 +157,35 @@
         });
     }
 
+    // Dynamic OT Calculation Function (Morning + Evening)
+    function calculateOtHours(inVal, outVal) {
+        let totalOt = 0;
+
+        // 1. Morning Early OT (Before 08:00 AM)
+        if (inVal) {
+            const [inH, inM] = inVal.split(':').map(Number);
+            const inMinutes = inH * 60 + inM;
+            const targetInMinutes = 8 * 60; // 08:00 AM
+
+            if (inMinutes < targetInMinutes) {
+                totalOt += (targetInMinutes - inMinutes) / 60;
+            }
+        }
+
+        // 2. Evening OT (After 17:30 PM)
+        if (outVal) {
+            const [outH, outM] = outVal.split(':').map(Number);
+            let outMinutes = outH * 60 + outM;
+            const targetOutMinutes = 17 * 60 + 30; // 17:30 PM
+
+            if (outMinutes > targetOutMinutes) {
+                totalOt += (outMinutes - targetOutMinutes) / 60;
+            }
+        }
+
+        return parseFloat(totalOt.toFixed(1));
+    }
+
     function loadAttendanceSheet() {
         const month = document.getElementById('attMonth').value;
         const empId = document.getElementById('attEmpSelect').value;
@@ -194,7 +223,10 @@
             const dateStr = `${month}-${d < 10 ? '0' + d : d}`;
             const dayRecord = attendanceData[key][dateStr] || { in: '', out: '', status: 'Present', ot: 0, advance: 0, loan: 0 };
 
-            totalOt += parseFloat(dayRecord.ot || 0);
+            // Recalculate OT dynamically so early morning OT works instantly
+            let calculatedOt = calculateOtHours(dayRecord.in, dayRecord.out);
+
+            totalOt += calculatedOt;
             totalAdvance += parseFloat(dayRecord.advance || 0);
             totalLoan += parseFloat(dayRecord.loan || 0);
 
@@ -205,13 +237,13 @@
                     <td><input type="time" id="out_${dateStr}" class="form-control form-control-sm text-center" value="${dayRecord.out || ''}" onchange="updateRow('${key}', '${dateStr}')"></td>
                     <td>
                         <select id="status_${dateStr}" class="form-select form-select-sm" onchange="updateRow('${key}', '${dateStr}')">
-                           <option value="Present" ${dayRecord.status === 'Present' ? 'selected' : ''}>Present</option>
-<option value="Half Day" ${dayRecord.status === 'Half Day' ? 'selected' : ''}>Half Day</option>
-<option value="Absent" ${dayRecord.status === 'Absent' ? 'selected' : ''}>Absent</option>
-<option value="Off Day" ${dayRecord.status === 'Off Day' ? 'selected' : ''}>Off Day</option>
+                            <option value="Present" ${dayRecord.status === 'Present' ? 'selected' : ''}>Present</option>
+                            <option value="Half Day" ${dayRecord.status === 'Half Day' ? 'selected' : ''}>Half Day</option>
+                            <option value="Absent" ${dayRecord.status === 'Absent' ? 'selected' : ''}>Absent</option>
+                            <option value="Off Day" ${dayRecord.status === 'Off Day' ? 'selected' : ''}>Off Day</option>
                         </select>
                     </td>
-                    <td><span class="badge ${dayRecord.ot > 0 ? 'bg-primary' : 'bg-secondary'} fs-6">${dayRecord.ot || 0} Hrs</span></td>
+                    <td><span class="badge ${calculatedOt > 0 ? 'bg-primary' : 'bg-secondary'} fs-6">${calculatedOt} Hrs</span></td>
                     <td><input type="number" id="adv_${dateStr}" class="form-control form-control-sm input-num-sm" placeholder="0" step="0.01" value="${dayRecord.advance || ''}" onchange="updateRow('${key}', '${dateStr}')"></td>
                     <td><input type="number" id="loan_${dateStr}" class="form-control form-control-sm input-num-sm" placeholder="0" step="0.01" value="${dayRecord.loan || ''}" onchange="updateRow('${key}', '${dateStr}')"></td>
                     <td class="no-print">
@@ -265,20 +297,7 @@
 
         if (!attendanceData[key]) attendanceData[key] = {};
 
-        let otHours = 0;
-        if (outVal) {
-            const [h, m] = outVal.split(':').map(Number);
-            let outInMinutes = h * 60 + m;
-            const targetInMinutes = 17 * 60 + 30; // 17:30
-
-            if (outInMinutes < targetInMinutes) {
-                outInMinutes += 24 * 60; // Overnight Shift Handling
-            }
-
-            if (outInMinutes > targetInMinutes) {
-                otHours = parseFloat(((outInMinutes - targetInMinutes) / 60).toFixed(1));
-            }
-        }
+        let otHours = calculateOtHours(inVal, outVal);
 
         attendanceData[key][dateStr] = { in: inVal, out: outVal, status: statusVal, ot: otHours, advance: advVal, loan: loanVal };
         localStorage.setItem('payroll_attendance', JSON.stringify(attendanceData));
