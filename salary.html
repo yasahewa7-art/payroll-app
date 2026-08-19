@@ -246,7 +246,10 @@
         if (!emp) { resetPayslip(); return; }
 
         let dailyBasic = parseFloat(emp.basic) || 0;
-        let dailyEpf = parseFloat(emp.epfBasic) || dailyBasic;
+        
+        // Daily EPF Value එක නොදුන්නොත් (Blank හෝ 0 නම්) EPF කැපීම සිදු නොවේ (0 ලෙස සලකයි)
+        let dailyEpf = parseFloat(emp.epfBasic) || 0; 
+        
         let fixedAllowance = parseFloat(emp.allowances) || 0;
 
         const att = getAttendanceDetails(empId, month);
@@ -256,10 +259,11 @@
         const otEarnings = otRate * att.totalOTHours;
         const totalAllowances = fixedAllowance + att.totalDailyAllowance;
 
+        // EPF/ETF ගණනය කිරීම
         const epfBase = dailyEpf * daysWorked;
-        const epf8 = epfBase * 0.08;
-        const epf12 = epfBase * 0.12;
-        const etf3 = epfBase * 0.03;
+        const epf8 = dailyEpf > 0 ? (epfBase * 0.08) : 0;
+        const epf12 = dailyEpf > 0 ? (epfBase * 0.12) : 0;
+        const etf3 = dailyEpf > 0 ? (epfBase * 0.03) : 0;
 
         const gross = workedBasic + otEarnings + totalAllowances;
         const deductions = epf8 + att.totalAdvance + att.totalLoan;
