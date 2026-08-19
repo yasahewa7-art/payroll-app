@@ -14,7 +14,6 @@
         .btn-custom { border-radius: 6px; font-weight: 500; }
         .input-num-sm { width: 100px; text-align: right; margin: 0 auto; }
         
-        /* Print Specific Styling */
         .print-only { display: none; }
         @media print {
             .no-print { display: none !important; }
@@ -34,7 +33,7 @@
 <body>
 
 <div class="container my-4">
-    <!-- Header (Web View) -->
+    <!-- Header -->
     <div class="card header-bg p-4 mb-4 no-print">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
@@ -68,9 +67,9 @@
         </div>
     </div>
 
-    <!-- Print Header (Visible only when Printing) -->
+    <!-- Print Header -->
     <div class="print-only mb-4 text-center">
-        <h2 class="fw-bold mb-1 text-uppercase" style="letter-spacing: 1px;">Monthly Attendance & Deductions Sheet</h2>
+        <h2 class="fw-bold mb-1 text-uppercase">Monthly Attendance & Deductions Sheet</h2>
         <p class="mb-3 text-muted">Matara & Weligama Branches</p>
         
         <div class="border p-3 rounded" style="background-color: #f8f9fa;">
@@ -114,7 +113,7 @@
             </table>
         </div>
 
-        <!-- Print Summary & Signatures (Visible only when Printing) -->
+        <!-- Print Summary -->
         <div class="print-only mt-4">
             <div class="d-flex justify-content-between border-top border-bottom py-2 fw-bold mb-5">
                 <div>Total OT: <span id="printTotalOt">0.0 Hrs</span></div>
@@ -144,7 +143,6 @@
     let employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
     let attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
 
-    // Set Default Month
     document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
     function populateEmployeeDropdown() {
@@ -161,7 +159,7 @@
     function calculateOtHours(inVal, outVal) {
         let totalOt = 0;
 
-        // 1. Morning Early OT (Before 08:00 AM)
+        // Morning OT (Before 08:00 AM)
         if (inVal) {
             const [inH, inM] = inVal.split(':').map(Number);
             const inMinutes = inH * 60 + inM;
@@ -172,7 +170,7 @@
             }
         }
 
-        // 2. Evening OT (After 17:30 PM)
+        // Evening OT (After 17:30 PM)
         if (outVal) {
             const [outH, outM] = outVal.split(':').map(Number);
             let outMinutes = outH * 60 + outM;
@@ -199,8 +197,7 @@
             return;
         }
 
-        // Fill Print Header Info
-        const empObj = employees.find(e => e.id === empId);
+        const empObj = employees.find(e => String(e.id).trim() === String(empId).trim());
         if (empObj) {
             document.getElementById('printEmpName').innerText = empObj.name;
             document.getElementById('printEmpId').innerText = empObj.id;
@@ -223,8 +220,10 @@
             const dateStr = `${month}-${d < 10 ? '0' + d : d}`;
             const dayRecord = attendanceData[key][dateStr] || { in: '', out: '', status: 'Present', ot: 0, advance: 0, loan: 0 };
 
-            // Recalculate OT dynamically so early morning OT works instantly
+            // Recalculate OT & save into object memory
             let calculatedOt = calculateOtHours(dayRecord.in, dayRecord.out);
+            dayRecord.ot = calculatedOt;
+            attendanceData[key][dateStr] = dayRecord;
 
             totalOt += calculatedOt;
             totalAdvance += parseFloat(dayRecord.advance || 0);
@@ -252,16 +251,17 @@
                 </tr>`;
         }
 
+        // Save synchronized data with recalculated OT values to localStorage
+        localStorage.setItem('payroll_attendance', JSON.stringify(attendanceData));
+
         const otStr = `${totalOt.toFixed(1)} Hrs`;
         const advStr = `${totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2})} LKR`;
         const loanStr = `${totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2})} LKR`;
 
-        // Update Badges
         document.getElementById('totalOtBadge').innerText = `Total OT: ${otStr}`;
         document.getElementById('totalAdvanceBadge').innerText = `Total Advance: ${advStr}`;
         document.getElementById('totalLoanBadge').innerText = `Total Loan: ${loanStr}`;
 
-        // Update Print Summary
         document.getElementById('printTotalOt').innerText = otStr;
         document.getElementById('printTotalAdv').innerText = advStr;
         document.getElementById('printTotalLoan').innerText = loanStr;
@@ -314,7 +314,6 @@
         }
     }
 
-    // Initial Load
     populateEmployeeDropdown();
 </script>
 
