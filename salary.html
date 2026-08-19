@@ -337,8 +337,8 @@
 
         let dailyBasic = parseFloat(empObj.basicSalary || empObj.dailyBasic || empObj.basic || 0);
         
-        // Daily EPF Rate එක ලබා ගැනීම (නැත්නම් 0 වේ)
-        let dailyEpf = parseFloat(empObj.epfSalary || empObj.dailyEpf || empObj.epfApplicableAmount || 0) || 0;
+        // Registration page හි ඇති DAILY EPF field එක සියලුම සාධ්‍ය Key Names මගින් auto-detect කර ගනී
+        let dailyEpf = parseFloat(empObj.dailyEpf || empObj.epfSalary || empObj.epfAmount || empObj.epfApplicableAmount || empObj.dailyEpfAmount || empObj.epfRate || 0) || 0;
         let allowances = parseFloat(empObj.allowances || empObj.allowance || 0);
 
         // Attendance Details
@@ -352,7 +352,7 @@
         const otRate = dailyBasic / 8;
         const otEarnings = otRate * totalOTHours;
 
-        // Daily EPF එක ඇතුළත් කර තිබේ නම් පමණක් EPF ගණනය වේ
+        // Daily EPF × Worked Days = EPF Base, ඉන්පසු 8% EPF ගණනය වේ
         const epfApplicableAmount = dailyEpf > 0 ? (dailyEpf * daysworkedVal) : 0;
         const epf8 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.08) : 0;
         const epf12 = epfApplicableAmount > 0 ? (epfApplicableAmount * 0.12) : 0;
