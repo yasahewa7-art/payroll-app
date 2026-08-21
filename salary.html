@@ -10,172 +10,152 @@
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .header-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
         .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .table-dark-custom { background-color: #0f172a; color: white; }
         .btn-custom { border-radius: 6px; font-weight: 500; }
+        .salary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; }
+        .net-salary-card { background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 10px; }
         
-        .salary-summary-box { 
-            background-color: #f0f7ff; 
-            border: 1px solid #cce5ff; 
-            border-radius: 10px; 
-            padding: 20px; 
-        }
-
-        .print-only { display: none; }
         @media print {
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
             body { background-color: white !important; font-size: 11pt; }
-            .card { box-shadow: none !important; border: 1px solid #000 !important; }
-            .table th, .table td { border: 1px solid #000 !important; padding: 6px !important; }
+            .card, .salary-box { box-shadow: none !important; border: 1px solid #aaa !important; }
         }
     </style>
 </head>
-
 <body>
 
 <div class="container my-4">
-    <!-- Header -->
+    <!-- Header Controls -->
     <div class="card header-bg p-4 mb-4 no-print">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
-                <h2 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip Calculator</h2>
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Monthly Salary Slip Generator</h2>
                 <p class="mb-0 text-light opacity-75">Matara & Weligama Branches</p>
             </div>
             <div class="d-flex gap-2 mt-3 mt-md-0">
-                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-arrow-left me-2"></i>Back to Registration</a>
-                <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-2"></i>Attendance Sheet</a>
+                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-arrow-left me-2"></i>Registration</a>
+                <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-2"></i>Attendance</a>
                 <button class="btn btn-primary btn-custom" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Print Payslip</button>
             </div>
         </div>
     </div>
 
-    <!-- Selection Controls -->
+    <!-- Controls Form -->
     <div class="card p-4 mb-4 no-print">
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Select Month *</label>
-                <input type="month" id="salMonth" class="form-control" onchange="calculateSalary()">
+                <input type="month" id="payMonth" class="form-control" onchange="calculateSalary()">
             </div>
             <div class="col-md-5">
                 <label class="form-label fw-semibold">Select Employee *</label>
-                <select id="salEmpSelect" class="form-select" onchange="calculateSalary()">
+                <select id="payEmpSelect" class="form-select" onchange="calculateSalary()">
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <button class="btn btn-success btn-custom w-100" onclick="saveSalaryRecord()"><i class="fa-solid fa-floppy-disk me-2"></i>Save Salary Record</button>
+                <button class="btn btn-success btn-custom w-100" onclick="calculateSalary()"><i class="fa-solid fa-calculator me-2"></i>Calculate Salary</button>
             </div>
         </div>
     </div>
 
-    <!-- Payslip Content Card -->
-    <div class="card p-4 mb-4">
+    <!-- Printable Payslip View -->
+    <div class="card p-4 salary-box">
         <div class="text-center mb-4">
-            <h2 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px;">RUKMAN PAYROLL SYSTEM</h2>
+            <h2 class="fw-bold mb-0 text-uppercase">RUKMAN PAYROLL SYSTEM</h2>
             <p class="text-muted mb-0">Monthly Employee Salary Slip</p>
             <hr class="my-3">
         </div>
 
-        <!-- Employee Info Section -->
+        <!-- Employee Info -->
         <div class="row mb-4 fs-6">
-            <div class="col-6">
-                <p class="mb-2"><strong>Employee Name:</strong> <span id="dispName">-</span></p>
-                <p class="mb-2"><strong>Employee ID:</strong> <span id="dispId">-</span></p>
-                <p class="mb-0"><strong>Designation:</strong> <span id="dispDesignation">-</span></p>
+            <div class="col-6 mb-2">
+                <div><strong>Employee Name:</strong> <span id="dispEmpName">-</span></div>
+                <div><strong>Employee ID:</strong> <span id="dispEmpId">-</span></div>
+                <div><strong>Bank Account:</strong> <span id="dispBank">-</span></div>
             </div>
-            <div class="col-6 text-end">
-                <p class="mb-2"><strong>Branch:</strong> <span id="dispBranch">-</span></p>
-                <p class="mb-2"><strong>Pay Period:</strong> <span id="dispMonth">-</span></p>
-                <p class="mb-0"><strong>Daily Rate:</strong> LKR <span id="dispDailyRate">0.00</span></p>
+            <div class="col-6 text-end mb-2">
+                <div><strong>Branch:</strong> <span id="dispBranch">-</span></div>
+                <div><strong>Pay Period:</strong> <span id="dispPeriod">-</span></div>
+                <div><strong>Daily Basic Rate:</strong> LKR <span id="dispDailyRate">0.00</span></div>
             </div>
         </div>
 
-        <!-- Earnings & Deductions Tables -->
-        <div class="row g-4">
+        <!-- Calculations Table -->
+        <div class="row g-3">
             <!-- Earnings -->
             <div class="col-md-6">
-                <div class="p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-                    <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-circle-plus me-2"></i>Earnings (එකතු කිරීම්)</h5>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span>Basic Salary / Worked Days (<span id="countWorkedDays">0</span> days):</span>
-                        <span class="fw-bold">LKR <span id="calcBasic">0.00</span></span>
+                <div class="p-3 border rounded bg-light h-100">
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="fa-solid fa-circle-plus me-2"></i>Earnings (එකතු කිරීම්)</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Basic Salary (<span id="dispDays">0</span> days):</span>
+                        <span class="fw-bold">LKR <span id="dispBasicTot">0.00</span></span>
                     </div>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span>OT Amount (<span id="countOtHours">0.0</span> Hrs):</span>
-                        <span class="fw-bold">LKR <span id="calcOt">0.00</span></span>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>OT Amount (<span id="dispOtHours">0.0</span> Hrs):</span>
+                        <span class="fw-bold">LKR <span id="dispOtTot">0.00</span></span>
                     </div>
-                    <div class="d-flex justify-content-between pt-3 fw-bold fs-5 text-dark">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Allowances:</span>
+                        <span class="fw-bold">LKR <span id="dispAllowanceTot">0.00</span></span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
                         <span>Total Earnings:</span>
-                        <span>LKR <span id="calcGross">0.00</span></span>
+                        <span>LKR <span id="dispTotalEarnings">0.00</span></span>
                     </div>
                 </div>
             </div>
 
             <!-- Deductions -->
             <div class="col-md-6">
-                <div class="p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-                    <h5 class="fw-bold text-danger mb-3"><i class="fa-solid fa-circle-minus me-2"></i>Deductions (අඩු කිරීම්)</h5>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
+                <div class="p-3 border rounded bg-light h-100">
+                    <h5 class="fw-bold text-danger border-bottom pb-2 mb-3"><i class="fa-solid fa-circle-minus me-2"></i>Deductions (අඩු කිරීම්)</h5>
+                    <div class="d-flex justify-content-between mb-2">
                         <span>Advance Payments:</span>
-                        <span class="fw-bold text-danger">LKR <span id="calcAdvance">0.00</span></span>
+                        <span class="fw-bold text-danger">LKR <span id="dispAdvanceTot">0.00</span></span>
                     </div>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
+                    <div class="d-flex justify-content-between mb-2">
                         <span>Loan Deductions:</span>
-                        <span class="fw-bold text-danger">LKR <span id="calcLoan">0.00</span></span>
+                        <span class="fw-bold text-danger">LKR <span id="dispLoanTot">0.00</span></span>
                     </div>
-                    <div class="d-flex justify-content-between pt-3 fw-bold fs-5 text-dark">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>EPF Contribution (8%):</span>
+                        <span class="fw-bold text-danger">LKR <span id="dispEpfTot">0.00</span></span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
                         <span>Total Deductions:</span>
-                        <span>LKR <span id="calcTotalDeductions">0.00</span></span>
+                        <span>LKR <span id="dispTotalDeductions">0.00</span></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Net Salary Display -->
-        <div class="salary-summary-box mt-4 text-center">
-            <h4 class="fw-bold text-dark mb-1">NET SALARY (අතට ලැබෙන මුදල)</h4>
-            <h1 class="fw-bold text-primary mb-0" style="font-size: 2.5rem;">LKR <span id="calcNetSalary">0.00</span></h1>
+        <!-- Net Salary -->
+        <div class="p-4 text-center mt-4 net-salary-card">
+            <h4 class="fw-bold text-uppercase mb-1">NET SALARY (අතට ලැබෙන මුදල)</h4>
+            <h1 class="fw-bold text-success display-5 mb-0">LKR <span id="dispNetSalary">0.00</span></h1>
         </div>
 
-        <!-- Print Signatures -->
-        <div class="print-only mt-5 pt-4">
-            <div class="row text-center">
-                <div class="col-6">
-                    <div style="border-top: 1px dashed #000; width: 70%; margin: 0 auto;"></div>
-                    <p class="mt-2 fw-semibold">Employee Signature</p>
-                </div>
-                <div class="col-6">
-                    <div style="border-top: 1px dashed #000; width: 70%; margin: 0 auto;"></div>
-                    <p class="mt-2 fw-semibold">Authorized Signature</p>
-                </div>
+        <!-- Signatures -->
+        <div class="row pt-5 text-center mt-4">
+            <div class="col-4">
+                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
+                <p class="mt-2 fw-semibold">Employee Signature</p>
             </div>
-        </div>
-    </div>
-
-    <!-- Saved Salary History Table -->
-    <div class="card p-4 no-print">
-        <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i>Saved Salary History</h4>
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle text-center mb-0">
-                <thead class="table-dark-custom">
-                    <tr>
-                        <th>MONTH</th>
-                        <th>EMP ID</th>
-                        <th>NAME</th>
-                        <th>NET SALARY</th>
-                        <th>SAVED DATE</th>
-                        <th>ACTION</th>
-                    </tr>
-                </thead>
-                <tbody id="salaryHistoryBody">
-                    <tr><td colspan="6" class="text-muted py-3">Loading history...</td></tr>
-                </tbody>
-            </table>
+            <div class="col-4">
+                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
+                <p class="mt-2 fw-semibold">Prepared By</p>
+            </div>
+            <div class="col-4">
+                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
+                <p class="mt-2 fw-semibold">Approved By</p>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Firebase SDK -->
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -188,206 +168,153 @@
         firebase.initializeApp(firebaseConfig);
     }
     const database = firebase.database();
-    const empRef = database.ref('employees');
-    const attRef = database.ref('attendance');
-    const salRef = database.ref('salary_history');
 
-    let employees = [];
+    let employeesData = {};
     let attendanceData = {};
 
-    document.getElementById('salMonth').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('payMonth').value = new Date().toISOString().slice(0, 7);
 
-    // Read Employees
-    empRef.on('value', (snapshot) => {
-        const data = snapshot.val() || {};
-        employees = Object.keys(data).map(key => ({ key, ...data[key] }));
-        populateEmployeeDropdown();
+    // Fetch Employees Data
+    database.ref('employees').on('value', (snapshot) => {
+        employeesData = snapshot.val() || {};
+        populateEmpDropdown();
         calculateSalary();
     });
 
-    // Read Attendance
-    attRef.on('value', (snapshot) => {
+    // Fetch Attendance Data
+    database.ref('attendance').on('value', (snapshot) => {
         attendanceData = snapshot.val() || {};
         calculateSalary();
     });
 
-    // Read Saved Salary History
-    salRef.on('value', (snapshot) => {
-        const historyData = snapshot.val() || {};
-        const historyBody = document.getElementById('salaryHistoryBody');
-        historyBody.innerHTML = '';
+    function populateEmpDropdown() {
+        const select = document.getElementById('payEmpSelect');
+        const currVal = select.value;
+        select.innerHTML = '<option value="">-- Choose Employee --</option>';
 
-        const keys = Object.keys(historyData);
-        if (keys.length === 0) {
-            historyBody.innerHTML = '<tr><td colspan="6" class="text-muted py-3">නවතම Salary History නොමැත.</td></tr>';
-            return;
-        }
+        let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
+        sortedList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-        keys.forEach(key => {
-            const item = historyData[key];
-            const empObj = employees.find(e => String(e.id || e.key).trim() === String(item.empId).trim());
-            const empName = empObj ? empObj.name : 'Unknown';
-            const savedDate = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '-';
-
-            historyBody.innerHTML += `
-                <tr>
-                    <td><strong>${item.month}</strong></td>
-                    <td>${item.empId}</td>
-                    <td>${empName}</td>
-                    <td class="fw-bold text-success">LKR ${item.netSalary}</td>
-                    <td>${savedDate}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteHistoryRecord('${key}')"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`;
-        });
-    });
-
-    function populateEmployeeDropdown() {
-        const empSelect = document.getElementById('salEmpSelect');
-        const currentSelected = empSelect.value;
-        empSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
-        
-        let sortedEmployees = [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        sortedEmployees.forEach(emp => {
+        sortedList.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
-            empSelect.innerHTML += `<option value="${empIdStr}">${emp.name} (${empIdStr}) - ${emp.branch || ''}</option>`;
+            select.innerHTML += `<option value="${empIdStr}">${emp.name} (${empIdStr}) - ${emp.branch || ''}</option>`;
         });
-        
-        empSelect.value = currentSelected;
+
+        select.value = currVal;
     }
 
     function calculateSalary() {
-        const month = document.getElementById('salMonth').value;
-        const empId = document.getElementById('salEmpSelect').value;
+        const month = document.getElementById('payMonth').value;
+        const selectedEmpId = document.getElementById('payEmpSelect').value;
 
-        if (!month || !empId) {
-            resetFields();
+        if (!month || !selectedEmpId) {
+            resetDisplay();
             return;
         }
 
-        const empObj = employees.find(e => String(e.id || e.key).trim() === String(empId).trim());
+        // 1. Find Employee Details
+        let empObj = null;
+        Object.keys(employeesData).forEach(k => {
+            const e = employeesData[k];
+            if (String(e.id || k).trim() === String(selectedEmpId).trim()) {
+                empObj = e;
+            }
+        });
+
         if (!empObj) {
-            resetFields();
+            resetDisplay();
             return;
         }
 
-        document.getElementById('dispName').innerText = empObj.name || '-';
-        document.getElementById('dispId').innerText = empObj.id || empObj.key || '-';
-        document.getElementById('dispDesignation').innerText = empObj.designation || '-';
-        document.getElementById('dispBranch').innerText = empObj.branch || '-';
-        document.getElementById('dispMonth').innerText = month;
-        
-        // Dynamic Rate Field Finder
-        const dailyRate = parseFloat(empObj.dailyRate || empObj.rate || empObj.dayRate || empObj.salary || 0);
-        const otRate = parseFloat(empObj.otRate || (dailyRate > 0 ? (dailyRate / 8) * 1.5 : 0));
-        document.getElementById('dispDailyRate').innerText = dailyRate.toLocaleString('en-US', {minimumFractionDigits: 2});
+        // Daily Rate & EPF Basic handling
+        const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
+        const epfBasicDaily = parseFloat(empObj.epfBasic || 0);
+        const allowance = parseFloat(empObj.allowances || 0);
 
-        // Smart Attendance Aggregator
+        document.getElementById('dispEmpName').innerText = empObj.name || '-';
+        document.getElementById('dispEmpId').innerText = empObj.id || selectedEmpId;
+        document.getElementById('dispBank').innerText = empObj.bankAcc || '-';
+        document.getElementById('dispBranch').innerText = empObj.branch || '-';
+        document.getElementById('dispPeriod').innerText = month;
+        document.getElementById('dispDailyRate').innerText = dailyRate.toFixed(2);
+
+        // 2. Fetch Monthly Attendance Data
+        const attKey = `${selectedEmpId}_${month}`;
+        const monthAtt = attendanceData[attKey] || {};
+
         let workedDays = 0;
-        let totalOtHrs = 0;
+        let totalOtHours = 0;
         let totalAdvance = 0;
         let totalLoan = 0;
 
-        const targetKey = `${String(empId).trim()}_${month}`;
+        Object.keys(monthAtt).forEach(dateStr => {
+            const dayData = monthAtt[dateStr];
 
-        // Direct Node Checking (Node per Month-Emp)
-        if (attendanceData[targetKey]) {
-            const monthRecords = attendanceData[targetKey];
-            Object.keys(monthRecords).forEach(dateKey => {
-                const rec = monthRecords[dateKey];
-                if (rec.status === 'Present') workedDays += 1;
-                else if (rec.status === 'Half Day') workedDays += 0.5;
+            // Count Days Worked
+            if (dayData.status === 'Present') {
+                workedDays += 1;
+            } else if (dayData.status === 'Half Day') {
+                workedDays += 0.5;
+            }
 
-                totalOtHrs += parseFloat(rec.ot || rec.otHours || 0);
-                totalAdvance += parseFloat(rec.advance || rec.advanceLkr || 0);
-                totalLoan += parseFloat(rec.loan || rec.loanLkr || 0);
-            });
-        } 
-        // Global Date-wise Fallback Search
-        else {
-            Object.keys(attendanceData).forEach(key => {
-                const item = attendanceData[key];
-                if (item && item.date && item.date.startsWith(month)) {
-                    if (String(item.empId || item.employeeId).trim() === String(empId).trim()) {
-                        if (item.status === 'Present') workedDays += 1;
-                        else if (item.status === 'Half Day') workedDays += 0.5;
-
-                        totalOtHrs += parseFloat(item.ot || item.otHours || 0);
-                        totalAdvance += parseFloat(item.advance || item.advanceLkr || 0);
-                        totalLoan += parseFloat(item.loan || item.loanLkr || 0);
-                    }
-                }
-            });
-        }
-
-        // Final Calculations
-        const basicSalary = workedDays * dailyRate;
-        const otAmount = totalOtHrs * otRate;
-        const grossSalary = basicSalary + otAmount;
-        const totalDeductions = totalAdvance + totalLoan;
-        const netSalary = grossSalary - totalDeductions;
-
-        // UI Updates
-        document.getElementById('countWorkedDays').innerText = workedDays;
-        document.getElementById('calcBasic').innerText = basicSalary.toLocaleString('en-US', {minimumFractionDigits: 2});
-        
-        document.getElementById('countOtHours').innerText = totalOtHrs.toFixed(1);
-        document.getElementById('calcOt').innerText = otAmount.toLocaleString('en-US', {minimumFractionDigits: 2});
-        
-        document.getElementById('calcGross').innerText = grossSalary.toLocaleString('en-US', {minimumFractionDigits: 2});
-        
-        document.getElementById('calcAdvance').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('calcLoan').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('calcTotalDeductions').innerText = totalDeductions.toLocaleString('en-US', {minimumFractionDigits: 2});
-        
-        document.getElementById('calcNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2});
-    }
-
-    function resetFields() {
-        document.getElementById('dispName').innerText = '-';
-        document.getElementById('dispId').innerText = '-';
-        document.getElementById('dispDesignation').innerText = '-';
-        document.getElementById('dispBranch').innerText = '-';
-        document.getElementById('dispMonth').innerText = '-';
-        document.getElementById('dispDailyRate').innerText = '0.00';
-        
-        document.getElementById('countWorkedDays').innerText = '0';
-        document.getElementById('calcBasic').innerText = '0.00';
-        document.getElementById('countOtHours').innerText = '0.0';
-        document.getElementById('calcOt').innerText = '0.00';
-        document.getElementById('calcGross').innerText = '0.00';
-        document.getElementById('calcAdvance').innerText = '0.00';
-        document.getElementById('calcLoan').innerText = '0.00';
-        document.getElementById('calcTotalDeductions').innerText = '0.00';
-        document.getElementById('calcNetSalary').innerText = '0.00';
-    }
-
-    function saveSalaryRecord() {
-        const month = document.getElementById('salMonth').value;
-        const empId = document.getElementById('salEmpSelect').value;
-
-        if (!month || !empId) return alert('කරුණාකර මාසය සහ සේවකයා තෝරන්න!');
-
-        const recordKey = `${String(empId).trim()}_${month}`;
-        const netSalary = document.getElementById('calcNetSalary').innerText;
-
-        salRef.child(recordKey).set({
-            empId: String(empId).trim(),
-            month: month,
-            netSalary: netSalary,
-            updatedAt: new Date().toISOString()
-        }).then(() => {
-            alert('Salary Record එක සාර්ථකව Save විය!');
-        }).catch((err) => {
-            alert('Error: ' + err.message);
+            // OT, Advance & Loan
+            totalOtHours += parseFloat(dayData.ot || 0);
+            totalAdvance += parseFloat(dayData.advance || 0);
+            totalLoan += parseFloat(dayData.loan || 0);
         });
+
+        // 3. Calculation Formulas
+        const basicTotal = workedDays * dailyRate;
+        
+        // OT Hourly Rate Calculation (Daily Basic / 8 hours * 1.5 OT rate)
+        const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
+        const otRate = hourlyRate * 1.5;
+        const otTotal = totalOtHours * otRate;
+
+        // EPF Calculation (8% on EPF applicable basic amount)
+        const epfApplicableTotal = workedDays * epfBasicDaily;
+        const epfTotal = epfApplicableTotal * 0.08;
+
+        const totalEarnings = basicTotal + otTotal + allowance;
+        const totalDeductions = totalAdvance + totalLoan + epfTotal;
+        const netSalary = totalEarnings - totalDeductions;
+
+        // 4. Update Screen
+        document.getElementById('dispDays').innerText = workedDays;
+        document.getElementById('dispBasicTot').innerText = basicTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
+        document.getElementById('dispOtTot').innerText = otTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        document.getElementById('dispAllowanceTot').innerText = allowance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispTotalEarnings').innerText = totalEarnings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispEpfTot').innerText = epfTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispTotalDeductions').innerText = totalDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        document.getElementById('dispNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    function deleteHistoryRecord(key) {
-        if (confirm('මෙම Salary Record එක ඉවත් කිරීමට අවශ්‍යද?')) {
-            salRef.child(key).remove();
-        }
+    function resetDisplay() {
+        document.getElementById('dispEmpName').innerText = '-';
+        document.getElementById('dispEmpId').innerText = '-';
+        document.getElementById('dispBank').innerText = '-';
+        document.getElementById('dispBranch').innerText = '-';
+        document.getElementById('dispPeriod').innerText = '-';
+        document.getElementById('dispDailyRate').innerText = '0.00';
+        document.getElementById('dispDays').innerText = '0';
+        document.getElementById('dispBasicTot').innerText = '0.00';
+        document.getElementById('dispOtHours').innerText = '0.0';
+        document.getElementById('dispOtTot').innerText = '0.00';
+        document.getElementById('dispAllowanceTot').innerText = '0.00';
+        document.getElementById('dispTotalEarnings').innerText = '0.00';
+        document.getElementById('dispAdvanceTot').innerText = '0.00';
+        document.getElementById('dispLoanTot').innerText = '0.00';
+        document.getElementById('dispEpfTot').innerText = '0.00';
+        document.getElementById('dispTotalDeductions').innerText = '0.00';
+        document.getElementById('dispNetSalary').innerText = '0.00';
     }
 </script>
 
