@@ -123,7 +123,7 @@
             </div>
             <div class="col-md-4 d-flex gap-2">
                 <button class="btn btn-primary btn-custom w-50" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Print (A5)</button>
-                <button class="btn btn-success btn-custom w-50" onclick="sendWhatsAppPost()"><i class="fa-brands fa-whatsapp me-1"></i> WhatsApp Post</button>
+                <button class="btn btn-success btn-custom w-50" id="btnSendWhatsapp" onclick="sendWhatsAppImage()"><i class="fa-brands fa-whatsapp me-1"></i> WhatsApp Image</button>
             </div>
         </div>
     </div>
@@ -395,8 +395,8 @@
         document.getElementById('dispNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // Convert Payslip Card to Image and Share via WhatsApp
-    function sendWhatsAppPost() {
+    // Convert Payslip Card to Image, Copy to Clipboard & Redirect to WhatsApp
+    async function sendWhatsAppImage() {
         const empName = document.getElementById('dispEmpName').innerText;
         const period = document.getElementById('dispPeriod').innerText;
 
@@ -406,33 +406,71 @@
         }
 
         const payslipElem = document.getElementById('payslipCard');
+        const btn = document.getElementById('btnSendWhatsapp');
+        const originalBtnText = btn.innerHTML;
 
-        // Generate Image from HTML
-        html2canvas(payslipElem, {
-            scale: 2,
-            useCORS: true
-        }).then(canvas => {
-            const image = canvas.toDataURL("image/png");
-            
-            // Download the Payslip Post Image
-            const link = document.createElement('a');
-            link.download = `Payslip_${empName}_${period}.png`;
-            link.href = image;
-            link.click();
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Creating Image...`;
+        btn.disabled = true;
 
-            // Prepare WhatsApp link
-            let phone = currentEmpData.phone || currentEmpData.mobile || '';
-            phone = phone.replace(/[^0-9]/g, '');
-            if (phone.startsWith('0')) {
-                phone = '94' + phone.substring(1);
-            }
+        try {
+            const canvas = await html2canvas(payslipElem, {
+                scale: 2,
+                useCORS: true
+            });
 
-            const message = `📄 *RUKMAN ENTERPRISES - PAYSLIP (${period})*\n👤 *Employee:* ${empName}\n\n✅ *Payslip Post එක Image එකක් ලෙස download විය. එය Attach කර යවන්න.*`;
-            const encodedMsg = encodeURIComponent(message);
-            let whatsappUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
+            // Convert Canvas to Blob for Copying
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    alert('Image එක සකස් කරගැනීමට නොහැකි විය.');
+                    btn.innerHTML = originalBtnText;
+                    btn.disabled = false;
+                    return;
+                }
 
-            window.open(whatsappUrl, '_blank');
-        });
+                let copied = false;
+                try {
+                    // Copy Image directly to Clipboard
+                    const data = [new ClipboardItem({ 'image/png': blob })];
+                    await navigator.clipboard.write(data);
+                    copied = true;
+                } catch (err) {
+                    console.log("Clipboard write not supported, downloading image fallback...", err);
+                }
+
+                // Fallback download if clipboard fails
+                if (!copied) {
+                    const link = document.createElement('a');
+                    link.download = `Payslip_${empName}_${period}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }
+
+                // Phone number processing
+                let phone = currentEmpData.phone || currentEmpData.mobile || '';
+                phone = phone.replace(/[^0-9]/g, '');
+                if (phone.startsWith('0')) {
+                    phone = '94' + phone.substring(1);
+                }
+
+                const msgNotice = copied 
+                    ? `📄 *RUKMAN ENTERPRISES - PAYSLIP (${period})*\n👤 *Employee:* ${empName}\n\n✨ *Payslip Image එක Copy වී ඇත. (Ctrl + V මඟින් Paste කරන්න)*` 
+                    : `📄 *RUKMAN ENTERPRISES - PAYSLIP (${period})*\n👤 *Employee:* ${empName}\n\n✨ *Payslip Image එක Download විය. Attach කර යවන්න.*`;
+
+                const encodedMsg = encodeURIComponent(msgNotice);
+                let whatsappUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
+
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+
+                window.open(whatsappUrl, '_blank');
+            }, 'image/png');
+
+        } catch (error) {
+            console.error(error);
+            alert('Image එක සකස් කිරීමේදී දෝෂයක් සිදු විය.');
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+        }
     }
 
     function resetDisplay() {
