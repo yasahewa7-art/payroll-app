@@ -49,28 +49,18 @@
             border-bottom: 1px solid #334155;
         }
         
-        /* Designer Branding Section */
-        .designer-branding {
-            border-top: 1px dashed #cbd5e1;
-            padding: 12px 20px;
-            background-color: #fafafa;
+        /* Designer Footer with Logo */
+        .designer-footer {
+            border-top: 1px solid #cbd5e1;
+            padding: 8px 15px;
+            font-size: 0.75rem;
+            color: #475569;
+            background-color: #f8fafc;
         }
-        .nuvia-text-main {
-            font-weight: 900;
-            letter-spacing: 1px;
-            color: #030712;
-            font-size: 1.1rem;
-        }
-        .nuvia-text-sub {
-            font-weight: 300;
-            color: #7c3aed;
-            font-size: 1.1rem;
-        }
-        .nuvia-tagline {
-            font-size: 0.65rem;
-            letter-spacing: 1.5px;
-            color: #6b7280;
-            font-weight: 600;
+        .designer-logo {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
         }
 
         @media print {
@@ -225,30 +215,15 @@
             </div>
         </div>
 
-        <!-- Designer Logo & Details Footer -->
-        <div class="designer-branding d-flex justify-content-between align-items-center">
+        <!-- Designer Footer with Raw Image Link -->
+        <div class="designer-footer d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <!-- NUVIA Labs SVG Logo -->
-                <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 70V50L45 20L75 55V20H85V80H75L50 45L25 80H20V70Z" fill="url(#nuvia_grad)"/>
-                    <rect x="20" y="70" width="8" height="10" fill="#2563eb" />
-                    <rect x="32" y="60" width="8" height="20" fill="#2563eb" />
-                    <rect x="44" y="50" width="8" height="30" fill="#2563eb" />
-                    <defs>
-                        <linearGradient id="nuvia_grad" x1="20" y1="20" x2="85" y2="80" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#2563eb"/>
-                            <stop offset="1" stop-color="#7c3aed"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <div>
-                    <div><span class="nuvia-text-main">NUVIA</span> <span class="nuvia-text-sub">Labs</span></div>
-                    <div class="nuvia-tagline">STREAMLINE. PROMOTE. GROW.</div>
-                </div>
+                <span>Design by:</span>
+                <img src="https://raw.githubusercontent.com/yasahewa7-art/payroll-app/main/logo.jpg" alt="NUVIA Labs" class="designer-logo">
+                <strong style="color: #4c1d95;">NUVIA Labs</strong>
             </div>
-            <div class="text-end small text-muted fw-semibold">
-                <div><i class="fa-solid fa-phone text-primary me-1"></i> (074) 2271 770</div>
-                <div><i class="fa-brands fa-whatsapp text-success me-1"></i> (074) 2510 522</div>
+            <div>
+                (074) 2271 770 / (074) 2510 522
             </div>
         </div>
     </div>
@@ -395,30 +370,62 @@
 
     function sendWhatsApp() {
         const empName = document.getElementById('dispEmpName').innerText;
+        const empId = document.getElementById('dispEmpId').innerText;
+        const bank = document.getElementById('dispBank').innerText;
+        const branch = document.getElementById('dispBranch').innerText;
         const period = document.getElementById('dispPeriod').innerText;
-        const netSalary = document.getElementById('dispNetSalary').innerText;
+        const dailyRate = document.getElementById('dispDailyRate').innerText;
 
-        if (empName === '-' || netSalary === '0.00') {
+        if (empName === '-' || empName === '') {
             alert('කරුණාකර පළමුව සේවකයා සහ මාසය තෝරාගෙන සිටින්න!');
             return;
         }
 
-        const basic = document.getElementById('dispBasicTot').innerText;
-        const ot = document.getElementById('dispOtTot').innerText;
-        const deductions = document.getElementById('dispTotalDeductions').innerText;
+        const days = document.getElementById('dispDays').innerText;
+        const basicTot = document.getElementById('dispBasicTot').innerText;
+        const otHours = document.getElementById('dispOtHours').innerText;
+        const otTot = document.getElementById('dispOtTot').innerText;
+        const allowanceTot = document.getElementById('dispAllowanceTot').innerText;
+        const totalEarnings = document.getElementById('dispTotalEarnings').innerText;
 
-        let message = `*RUKMAN ENTERPRISES - SALARY SLIP*\n`;
-        message += `-----------------------------------\n`;
-        message += `👤 *Employee:* ${empName}\n`;
-        message += `📅 *Month:* ${period}\n`;
-        message += `-----------------------------------\n`;
-        message += `💵 *Basic Salary:* LKR ${basic}\n`;
-        message += `⏰ *OT Amount:* LKR ${ot}\n`;
-        message += `🔻 *Deductions:* LKR ${deductions}\n`;
-        message += `-----------------------------------\n`;
-        message += `✅ *NET SALARY:* *LKR ${netSalary}*\n`;
-        message += `-----------------------------------\n`;
-        message += `Thank You!\n\n_Designed by NUVIA Labs_`;
+        const advanceTot = document.getElementById('dispAdvanceTot').innerText;
+        const loanTot = document.getElementById('dispLoanTot').innerText;
+        const epfTot = document.getElementById('dispEpfTot').innerText;
+        const totalDeductions = document.getElementById('dispTotalDeductions').innerText;
+
+        const epf12 = document.getElementById('dispEpf12').innerText;
+        const etf3 = document.getElementById('dispEtf3').innerText;
+        const netSalary = document.getElementById('dispNetSalary').innerText;
+
+        let message = `🏢 *RUKMAN ENTERPRISES*\n`;
+        message += `📄 *(PAYSLIP) - ${period}*\n`;
+        message += `-------------------------------------------\n`;
+        message += `👤 *Employee Name:* ${empName}\n`;
+        message += `🆔 *Employee ID:* ${empId}\n`;
+        message += `🏦 *Bank Account:* ${bank}\n`;
+        message += `📍 *Branch:* ${branch}\n`;
+        message += `💵 *Daily Rate:* LKR ${dailyRate}\n`;
+        message += `-------------------------------------------\n`;
+        message += `💰 *EARNINGS*\n`;
+        message += `• Basic Salary (${days} days): LKR ${basicTot}\n`;
+        message += `• OT Amount (${otHours} Hrs): LKR ${otTot}\n`;
+        message += `• Allowances: LKR ${allowanceTot}\n`;
+        message += `*Total Earnings: LKR ${totalEarnings}*\n`;
+        message += `-------------------------------------------\n`;
+        message += `🔻 *DEDUCTIONS*\n`;
+        message += `• Advance Payments: LKR ${advanceTot}\n`;
+        message += `• Loan Deductions: LKR ${loanTot}\n`;
+        message += `• EPF Employee (8%): LKR ${epfTot}\n`;
+        message += `*Total Deductions: LKR ${totalDeductions}*\n`;
+        message += `-------------------------------------------\n`;
+        message += `🏛️ *EMPLOYER CONTRIBUTIONS*\n`;
+        message += `• EPF Employer (12%): LKR ${epf12}\n`;
+        message += `• ETF Employer (3%): LKR ${etf3}\n`;
+        message += `-------------------------------------------\n`;
+        message += `✅ *EMPLOYEE NET PAY: LKR ${netSalary}*\n`;
+        message += `-------------------------------------------\n`;
+        message += `_Design by: NUVIA Labs_\n`;
+        message += `📞 (074) 2271 770 / (074) 2510 522`;
 
         let phone = currentEmpData.phone || currentEmpData.mobile || '';
         phone = phone.replace(/[^0-9]/g, '');
