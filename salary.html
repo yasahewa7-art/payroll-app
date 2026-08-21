@@ -11,7 +11,7 @@
         .header-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
         .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .btn-custom { border-radius: 6px; font-weight: 500; }
-        .salary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; }
+        .salary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; }
         .net-salary-card { background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 10px; }
         
         @media print {
@@ -24,7 +24,7 @@
 <body>
 
 <div class="container my-4">
-    <!-- Header Controls -->
+    <!-- Navigation Header -->
     <div class="card header-bg p-4 mb-4 no-print">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
@@ -119,7 +119,7 @@
                         <span class="fw-bold text-danger">LKR <span id="dispLoanTot">0.00</span></span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
-                        <span>EPF Contribution (8%):</span>
+                        <span>EPF Employee (8%):</span>
                         <span class="fw-bold text-danger">LKR <span id="dispEpfTot">0.00</span></span>
                     </div>
                     <hr>
@@ -131,14 +131,23 @@
             </div>
         </div>
 
-        <!-- Net Salary -->
+        <!-- Net Salary Card -->
         <div class="p-4 text-center mt-4 net-salary-card">
             <h4 class="fw-bold text-uppercase mb-1">NET SALARY (අතට ලැබෙන මුදල)</h4>
             <h1 class="fw-bold text-success display-5 mb-0">LKR <span id="dispNetSalary">0.00</span></h1>
         </div>
 
+        <!-- Employer Contributions Section -->
+        <div class="mt-4 p-3 border rounded bg-body-tertiary">
+            <h6 class="fw-bold text-secondary mb-2"><i class="fa-solid fa-building me-2"></i>Employer Contributions (ආයතනය මගින් ගෙවීම්)</h6>
+            <div class="row text-muted small">
+                <div class="col-6">EPF Employer (12%): <strong>LKR <span id="dispEpf12">0.00</span></strong></div>
+                <div class="col-6 text-end">ETF Employer (3%): <strong>LKR <span id="dispEtf3">0.00</span></strong></div>
+            </div>
+        </div>
+
         <!-- Signatures -->
-        <div class="row pt-5 text-center mt-4">
+        <div class="row pt-5 text-center mt-3">
             <div class="col-4">
                 <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
                 <p class="mt-2 fw-semibold">Employee Signature</p>
@@ -174,14 +183,12 @@
 
     document.getElementById('payMonth').value = new Date().toISOString().slice(0, 7);
 
-    // Fetch Employees Data
     database.ref('employees').on('value', (snapshot) => {
         employeesData = snapshot.val() || {};
         populateEmpDropdown();
         calculateSalary();
     });
 
-    // Fetch Attendance Data
     database.ref('attendance').on('value', (snapshot) => {
         attendanceData = snapshot.val() || {};
         calculateSalary();
@@ -212,7 +219,6 @@
             return;
         }
 
-        // 1. Find Employee Details
         let empObj = null;
         Object.keys(employeesData).forEach(k => {
             const e = employeesData[k];
@@ -226,7 +232,6 @@
             return;
         }
 
-        // Daily Rate & EPF Basic handling
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
         const epfBasicDaily = parseFloat(empObj.epfBasic || 0);
         const allowance = parseFloat(empObj.allowances || 0);
@@ -238,7 +243,6 @@
         document.getElementById('dispPeriod').innerText = month;
         document.getElementById('dispDailyRate').innerText = dailyRate.toFixed(2);
 
-        // 2. Fetch Monthly Attendance Data
         const attKey = `${selectedEmpId}_${month}`;
         const monthAtt = attendanceData[attKey] || {};
 
@@ -250,36 +254,36 @@
         Object.keys(monthAtt).forEach(dateStr => {
             const dayData = monthAtt[dateStr];
 
-            // Count Days Worked
             if (dayData.status === 'Present') {
                 workedDays += 1;
             } else if (dayData.status === 'Half Day') {
                 workedDays += 0.5;
             }
 
-            // OT, Advance & Loan
             totalOtHours += parseFloat(dayData.ot || 0);
             totalAdvance += parseFloat(dayData.advance || 0);
             totalLoan += parseFloat(dayData.loan || 0);
         });
 
-        // 3. Calculation Formulas
+        // 1. Basic & OT Formulas (Normal Hourly Rate Calculation)
         const basicTotal = workedDays * dailyRate;
-        
-        // OT Hourly Rate Calculation (Daily Basic / 8 hours * 1.5 OT rate)
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
-        const otRate = hourlyRate * 1.5;
-        const otTotal = totalOtHours * otRate;
+        
+        // OT = (දිනක පඩිය / 8) * වැඩකළ පැය ගණන
+        const otTotal = hourlyRate * totalOtHours;
 
-        // EPF Calculation (8% on EPF applicable basic amount)
+        // 2. EPF & ETF Formulas
         const epfApplicableTotal = workedDays * epfBasicDaily;
-        const epfTotal = epfApplicableTotal * 0.08;
+        const epf8Total = epfApplicableTotal * 0.08;
+        const epf12Total = epfApplicableTotal * 0.12;
+        const etf3Total = epfApplicableTotal * 0.03;
 
+        // 3. Totals
         const totalEarnings = basicTotal + otTotal + allowance;
-        const totalDeductions = totalAdvance + totalLoan + epfTotal;
+        const totalDeductions = totalAdvance + totalLoan + epf8Total;
         const netSalary = totalEarnings - totalDeductions;
 
-        // 4. Update Screen
+        // Render Values
         document.getElementById('dispDays').innerText = workedDays;
         document.getElementById('dispBasicTot').innerText = basicTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
@@ -291,8 +295,11 @@
 
         document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById('dispEpfTot').innerText = epfTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispEpfTot').innerText = epf8Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispTotalDeductions').innerText = totalDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        document.getElementById('dispEpf12').innerText = epf12Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispEtf3').innerText = etf3Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         document.getElementById('dispNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
@@ -314,6 +321,8 @@
         document.getElementById('dispLoanTot').innerText = '0.00';
         document.getElementById('dispEpfTot').innerText = '0.00';
         document.getElementById('dispTotalDeductions').innerText = '0.00';
+        document.getElementById('dispEpf12').innerText = '0.00';
+        document.getElementById('dispEtf3').innerText = '0.00';
         document.getElementById('dispNetSalary').innerText = '0.00';
     }
 </script>
