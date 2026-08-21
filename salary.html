@@ -76,7 +76,7 @@
             <hr class="my-3">
         </div>
 
-        <!-- Employee Details Section -->
+        <!-- Employee Info Section -->
         <div class="row mb-4 fs-6">
             <div class="col-6">
                 <p class="mb-2"><strong>Employee Name:</strong> <span id="dispName">-</span></p>
@@ -175,12 +175,11 @@
     </div>
 </div>
 
-<!-- Firebase SDK Integrations -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // Firebase Setup
     const firebaseConfig = {
         databaseURL: "https://rukman-payroll-default-rtdb.firebaseio.com"
     };
@@ -198,7 +197,7 @@
 
     document.getElementById('salMonth').value = new Date().toISOString().slice(0, 7);
 
-    // Fetch Employees Realtime
+    // Read Employees
     empRef.on('value', (snapshot) => {
         const data = snapshot.val() || {};
         employees = Object.keys(data).map(key => ({ key, ...data[key] }));
@@ -206,13 +205,13 @@
         calculateSalary();
     });
 
-    // Fetch Attendance Realtime
+    // Read Attendance
     attRef.on('value', (snapshot) => {
         attendanceData = snapshot.val() || {};
         calculateSalary();
     });
 
-    // Fetch Saved Salary History Realtime
+    // Read Saved Salary History
     salRef.on('value', (snapshot) => {
         const historyData = snapshot.val() || {};
         const historyBody = document.getElementById('salaryHistoryBody');
@@ -252,7 +251,7 @@
         let sortedEmployees = [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         sortedEmployees.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
-            empSelect.innerHTML += `<option value="${empIdStr}">${emp.name} (${empIdStr}) - ${emp.branch}</option>`;
+            empSelect.innerHTML += `<option value="${empIdStr}">${emp.name} (${empIdStr}) - ${emp.branch || ''}</option>`;
         });
         
         empSelect.value = currentSelected;
@@ -273,38 +272,56 @@
             return;
         }
 
-        // Display Employee Info
         document.getElementById('dispName').innerText = empObj.name || '-';
         document.getElementById('dispId').innerText = empObj.id || empObj.key || '-';
         document.getElementById('dispDesignation').innerText = empObj.designation || '-';
         document.getElementById('dispBranch').innerText = empObj.branch || '-';
         document.getElementById('dispMonth').innerText = month;
         
-        // Flexible Daily Rate Fetching
-        const dailyRate = parseFloat(empObj.dailyRate || empObj.rate || empObj.dayRate || 0);
+        // Dynamic Rate Field Finder
+        const dailyRate = parseFloat(empObj.dailyRate || empObj.rate || empObj.dayRate || empObj.salary || 0);
         const otRate = parseFloat(empObj.otRate || (dailyRate > 0 ? (dailyRate / 8) * 1.5 : 0));
         document.getElementById('dispDailyRate').innerText = dailyRate.toLocaleString('en-US', {minimumFractionDigits: 2});
 
-        // Attendance Data Calculation
-        const key = `${String(empId).trim()}_${month}`;
-        const monthAttendance = attendanceData[key] || {};
-
+        // Smart Attendance Aggregator
         let workedDays = 0;
         let totalOtHrs = 0;
         let totalAdvance = 0;
         let totalLoan = 0;
 
-        Object.keys(monthAttendance).forEach(date => {
-            const rec = monthAttendance[date];
-            if (rec.status === 'Present') workedDays += 1;
-            else if (rec.status === 'Half Day') workedDays += 0.5;
+        const targetKey = `${String(empId).trim()}_${month}`;
 
-            totalOtHrs += parseFloat(rec.ot || 0);
-            totalAdvance += parseFloat(rec.advance || 0);
-            totalLoan += parseFloat(rec.loan || 0);
-        });
+        // Direct Node Checking (Node per Month-Emp)
+        if (attendanceData[targetKey]) {
+            const monthRecords = attendanceData[targetKey];
+            Object.keys(monthRecords).forEach(dateKey => {
+                const rec = monthRecords[dateKey];
+                if (rec.status === 'Present') workedDays += 1;
+                else if (rec.status === 'Half Day') workedDays += 0.5;
 
-        // Calculations
+                totalOtHrs += parseFloat(rec.ot || rec.otHours || 0);
+                totalAdvance += parseFloat(rec.advance || rec.advanceLkr || 0);
+                totalLoan += parseFloat(rec.loan || rec.loanLkr || 0);
+            });
+        } 
+        // Global Date-wise Fallback Search
+        else {
+            Object.keys(attendanceData).forEach(key => {
+                const item = attendanceData[key];
+                if (item && item.date && item.date.startsWith(month)) {
+                    if (String(item.empId || item.employeeId).trim() === String(empId).trim()) {
+                        if (item.status === 'Present') workedDays += 1;
+                        else if (item.status === 'Half Day') workedDays += 0.5;
+
+                        totalOtHrs += parseFloat(item.ot || item.otHours || 0);
+                        totalAdvance += parseFloat(item.advance || item.advanceLkr || 0);
+                        totalLoan += parseFloat(item.loan || item.loanLkr || 0);
+                    }
+                }
+            });
+        }
+
+        // Final Calculations
         const basicSalary = workedDays * dailyRate;
         const otAmount = totalOtHrs * otRate;
         const grossSalary = basicSalary + otAmount;
@@ -361,9 +378,9 @@
             netSalary: netSalary,
             updatedAt: new Date().toISOString()
         }).then(() => {
-            alert('Salary Record successfully saved to Firebase!');
+            alert('Salary Record එක සාර්ථකව Save විය!');
         }).catch((err) => {
-            alert('Error saving record: ' + err.message);
+            alert('Error: ' + err.message);
         });
     }
 
