@@ -261,27 +261,26 @@
             const inMin = inH * 60 + inM;
             let outMin = outH * 60 + outM;
 
-            // පාලනය: යම් හෙයකින් Out Time එක පහුවෙනිදා පාන්දර නම් (Midnight shift)
+            // Midnight Shift (පහුවෙනිදා පාන්දර වන තෙක් වැඩ කළහොත්)
             if (outMin < inMin) {
-                outMin += 24 * 60; // ඊළඟ දිනට පැය 24ක් එකතු කරයි
+                outMin += 24 * 60;
             }
 
-            const standardInMin = 8 * 60;        // 08:00 (පැය 8:00)
-            const standardOutMin = 17 * 60 + 30; // 17:30 (පැය 17:30)
+            const standardInMin = 8 * 60;        // 08:00
+            const standardOutMin = 17 * 60 + 30; // 17:30
 
-            // 1. උදෑසන 08:00 ට පෙර OT ගණනය කිරීම
+            // 1. උදෑසන 08:00 ට පෙර OT
             let morningOtMin = 0;
             if (inMin < standardInMin) {
                 morningOtMin = standardInMin - inMin;
             }
 
-            // 2. සවස 17:30 න් පසු / පාන්දර වන තෙක් OT ගණනය කිරීම
+            // 2. සවස 17:30 න් පසු / පාන්දර වන තෙක් OT
             let eveningOtMin = 0;
             if (outMin > standardOutMin) {
-                eveningOtMin = outMin - standardOutOutMin;
+                eveningOtMin = outMin - standardOutMin;
             }
 
-            // මුළු OT පැය ගණන (විශේෂයෙන් පැය වලින්)
             ot = (morningOtMin + eveningOtMin) / 60;
         }
 
