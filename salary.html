@@ -3,162 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary Payslip Generator - Payroll App</title>
+    <title>Salary Payslip Generator - Rukman Payroll</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; }
         .header-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
-        .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .btn-custom { border-radius: 6px; font-weight: 500; }
-        .salary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; }
-        .net-salary-card { background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 10px; }
         
+        /* Template Design Styles */
+        .payslip-container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 2px solid #334155;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .payslip-header {
+            background-color: #cbd5e1;
+            border-bottom: 2px solid #334155;
+            padding: 15px;
+            text-align: center;
+        }
+        .payslip-table th {
+            background-color: #cbd5e1 !important;
+            color: #0f172a;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #334155 !important;
+        }
+        .payslip-table td, .payslip-table th {
+            border-color: #cbd5e1;
+            padding: 8px 12px;
+        }
+        .net-pay-box {
+            border: 2px solid #334155;
+            background-color: #f8fafc;
+        }
+        .net-pay-header {
+            background-color: #cbd5e1;
+            font-weight: bold;
+            padding: 6px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+
         @media print {
             .no-print { display: none !important; }
-            body { background-color: white !important; font-size: 11pt; }
-            .card, .salary-box { box-shadow: none !important; border: 1px solid #aaa !important; }
+            body { background-color: white !important; }
+            .payslip-container { border: 1.5px solid #000 !important; box-shadow: none !important; }
         }
     </style>
 </head>
 <body>
 
 <div class="container my-4">
-    <!-- Navigation Header -->
-    <div class="card header-bg p-4 mb-4 no-print">
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
+    <!-- Controls Section -->
+    <div class="card header-bg p-4 mb-4 no-print border-0 shadow">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <h2 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Monthly Salary Slip Generator</h2>
-                <p class="mb-0 text-light opacity-75">Matara & Weligama Branches</p>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip Generator</h3>
+                <p class="mb-0 text-light opacity-75">Rukman Payroll System - Matara & Weligama Branches</p>
             </div>
-            <div class="d-flex gap-2 mt-3 mt-md-0">
-                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-arrow-left me-2"></i>Registration</a>
-                <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-2"></i>Attendance</a>
-                <button class="btn btn-primary btn-custom" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Print Payslip</button>
+            <div class="d-flex gap-2">
+                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-arrow-left me-1"></i> Registration</a>
+                <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-1"></i> Attendance</a>
             </div>
         </div>
-    </div>
-
-    <!-- Controls Form -->
-    <div class="card p-4 mb-4 no-print">
+        <hr class="my-3 border-secondary">
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Select Month *</label>
+                <label class="form-label fw-semibold text-light">Select Month *</label>
                 <input type="month" id="payMonth" class="form-control" onchange="calculateSalary()">
             </div>
-            <div class="col-md-5">
-                <label class="form-label fw-semibold">Select Employee *</label>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-light">Select Employee *</label>
                 <select id="payEmpSelect" class="form-select" onchange="calculateSalary()">
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <button class="btn btn-success btn-custom w-100" onclick="calculateSalary()"><i class="fa-solid fa-calculator me-2"></i>Calculate Salary</button>
+            <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-primary btn-custom w-50" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Print</button>
+                <button class="btn btn-success btn-custom w-50" onclick="sendWhatsApp()"><i class="fa-brands fa-whatsapp me-1"></i> WhatsApp</button>
             </div>
         </div>
     </div>
 
-    <!-- Printable Payslip View -->
-    <div class="card p-4 salary-box">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold mb-0 text-uppercase">RUKMAN PAYROLL SYSTEM</h2>
-            <p class="text-muted mb-0">Monthly Employee Salary Slip</p>
-            <hr class="my-3">
+    <!-- Printable Payslip Template -->
+    <div class="payslip-container p-0">
+        <!-- Header -->
+        <div class="payslip-header">
+            <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">RUKMAN ENTERPRISES</h3>
+            <div class="fw-semibold text-secondary" style="font-size: 0.9rem;">(PAYSLIP)</div>
+            <div class="small text-muted">Matara & Weligama Branches | Contact: 07X-XXXXXXX</div>
         </div>
 
-        <!-- Employee Info -->
-        <div class="row mb-4 fs-6">
-            <div class="col-6 mb-2">
-                <div><strong>Employee Name:</strong> <span id="dispEmpName">-</span></div>
-                <div><strong>Employee ID:</strong> <span id="dispEmpId">-</span></div>
-                <div><strong>Bank Account:</strong> <span id="dispBank">-</span></div>
-            </div>
-            <div class="col-6 text-end mb-2">
-                <div><strong>Branch:</strong> <span id="dispBranch">-</span></div>
-                <div><strong>Pay Period:</strong> <span id="dispPeriod">-</span></div>
-                <div><strong>Daily Basic Rate:</strong> LKR <span id="dispDailyRate">0.00</span></div>
-            </div>
-        </div>
-
-        <!-- Calculations Table -->
-        <div class="row g-3">
-            <!-- Earnings -->
-            <div class="col-md-6">
-                <div class="p-3 border rounded bg-light h-100">
-                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="fa-solid fa-circle-plus me-2"></i>Earnings (එකතු කිරීම්)</h5>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Basic Salary (<span id="dispDays">0</span> days):</span>
-                        <span class="fw-bold">LKR <span id="dispBasicTot">0.00</span></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>OT Amount (<span id="dispOtHours">0.0</span> Hrs):</span>
-                        <span class="fw-bold">LKR <span id="dispOtTot">0.00</span></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Allowances:</span>
-                        <span class="fw-bold">LKR <span id="dispAllowanceTot">0.00</span></span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
-                        <span>Total Earnings:</span>
-                        <span>LKR <span id="dispTotalEarnings">0.00</span></span>
-                    </div>
+        <!-- Employee Info Grid -->
+        <div class="p-3 border-bottom border-dark">
+            <div class="row g-2 fs-6">
+                <div class="col-6">
+                    <div class="row"><div class="col-5 text-muted">Employee Name</div><div class="col-7 fw-bold">: <span id="dispEmpName">-</span></div></div>
+                    <div class="row"><div class="col-5 text-muted">Employee ID</div><div class="col-7 fw-bold">: <span id="dispEmpId">-</span></div></div>
+                    <div class="row"><div class="col-5 text-muted">Bank Account</div><div class="col-7 fw-bold">: <span id="dispBank">-</span></div></div>
                 </div>
-            </div>
-
-            <!-- Deductions -->
-            <div class="col-md-6">
-                <div class="p-3 border rounded bg-light h-100">
-                    <h5 class="fw-bold text-danger border-bottom pb-2 mb-3"><i class="fa-solid fa-circle-minus me-2"></i>Deductions (අඩු කිරීම්)</h5>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Advance Payments:</span>
-                        <span class="fw-bold text-danger">LKR <span id="dispAdvanceTot">0.00</span></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Loan Deductions:</span>
-                        <span class="fw-bold text-danger">LKR <span id="dispLoanTot">0.00</span></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>EPF Employee (8%):</span>
-                        <span class="fw-bold text-danger">LKR <span id="dispEpfTot">0.00</span></span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
-                        <span>Total Deductions:</span>
-                        <span>LKR <span id="dispTotalDeductions">0.00</span></span>
-                    </div>
+                <div class="col-6">
+                    <div class="row"><div class="col-5 text-muted">Branch</div><div class="col-7 fw-bold">: <span id="dispBranch">-</span></div></div>
+                    <div class="row"><div class="col-5 text-muted">Pay Period</div><div class="col-7 fw-bold">: <span id="dispPeriod">-</span></div></div>
+                    <div class="row"><div class="col-5 text-muted">Daily Rate</div><div class="col-7 fw-bold">: LKR <span id="dispDailyRate">0.00</span></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- Net Salary Card -->
-        <div class="p-4 text-center mt-4 net-salary-card">
-            <h4 class="fw-bold text-uppercase mb-1">NET SALARY (අතට ලැබෙන මුදල)</h4>
-            <h1 class="fw-bold text-success display-5 mb-0">LKR <span id="dispNetSalary">0.00</span></h1>
-        </div>
+        <!-- Earnings & Deductions Table -->
+        <table class="table table-bordered payslip-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Earnings</th>
+                    <th class="text-end" style="width: 160px;">Amount (LKR)</th>
+                    <th>Deductions</th>
+                    <th class="text-end" style="width: 160px;">Amount (LKR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Basic Salary (<span id="dispDays">0</span> days)</td>
+                    <td class="text-end fw-semibold"><span id="dispBasicTot">0.00</span></td>
+                    <td>Advance Payments</td>
+                    <td class="text-end fw-semibold text-danger"><span id="dispAdvanceTot">0.00</span></td>
+                </tr>
+                <tr>
+                    <td>OT Amount (<span id="dispOtHours">0.0</span> Hrs)</td>
+                    <td class="text-end fw-semibold"><span id="dispOtTot">0.00</span></td>
+                    <td>Loan Deductions</td>
+                    <td class="text-end fw-semibold text-danger"><span id="dispLoanTot">0.00</span></td>
+                </tr>
+                <tr>
+                    <td>Allowances</td>
+                    <td class="text-end fw-semibold"><span id="dispAllowanceTot">0.00</span></td>
+                    <td>EPF Employee (8%)</td>
+                    <td class="text-end fw-semibold text-danger"><span id="dispEpfTot">0.00</span></td>
+                </tr>
+                <tr class="fw-bold" style="background-color: #f8fafc;">
+                    <td>Total Earnings</td>
+                    <td class="text-end text-success"><span id="dispTotalEarnings">0.00</span></td>
+                    <td>Total Deductions</td>
+                    <td class="text-end text-danger"><span id="dispTotalDeductions">0.00</span></td>
+                </tr>
+            </tbody>
+        </table>
 
-        <!-- Employer Contributions Section -->
-        <div class="mt-4 p-3 border rounded bg-body-tertiary">
-            <h6 class="fw-bold text-secondary mb-2"><i class="fa-solid fa-building me-2"></i>Employer Contributions (ආයතනය මගින් ගෙවීම්)</h6>
-            <div class="row text-muted small">
-                <div class="col-6">EPF Employer (12%): <strong>LKR <span id="dispEpf12">0.00</span></strong></div>
-                <div class="col-6 text-end">ETF Employer (3%): <strong>LKR <span id="dispEtf3">0.00</span></strong></div>
+        <!-- Employer Contributions & Net Pay Section -->
+        <div class="p-3">
+            <div class="row align-items-center">
+                <!-- Employer Contributions -->
+                <div class="col-md-7">
+                    <div class="p-2 border rounded bg-light small">
+                        <div class="fw-bold border-bottom pb-1 mb-1 text-secondary">Employer Contributions</div>
+                        <div class="d-flex justify-content-between">
+                            <span>EPF Employer (12%):</span>
+                            <strong>LKR <span id="dispEpf12">0.00</span></strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>ETF Employer (3%):</span>
+                            <strong>LKR <span id="dispEtf3">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Net Pay Box -->
+                <div class="col-md-5 mt-3 mt-md-0">
+                    <div class="net-pay-box rounded">
+                        <div class="net-pay-header small">EMPLOYEE NET PAY</div>
+                        <div class="p-2 text-center fs-3 fw-bold text-success">
+                            LKR <span id="dispNetSalary">0.00</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Signatures -->
-        <div class="row pt-5 text-center mt-3">
-            <div class="col-4">
-                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
-                <p class="mt-2 fw-semibold">Employee Signature</p>
-            </div>
-            <div class="col-4">
-                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
-                <p class="mt-2 fw-semibold">Prepared By</p>
-            </div>
-            <div class="col-4">
-                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto;"></div>
-                <p class="mt-2 fw-semibold">Approved By</p>
+        <div class="p-4 pt-5">
+            <div class="row text-center fs-6">
+                <div class="col-4">
+                    <div style="border-top: 1px dashed #334155; width: 80%; margin: 0 auto;"></div>
+                    <div class="mt-1 small fw-semibold">Employee Signature</div>
+                </div>
+                <div class="col-4">
+                    <div style="border-top: 1px dashed #334155; width: 80%; margin: 0 auto;"></div>
+                    <div class="mt-1 small fw-semibold">Prepared By</div>
+                </div>
+                <div class="col-4">
+                    <div style="border-top: 1px dashed #334155; width: 80%; margin: 0 auto;"></div>
+                    <div class="mt-1 small fw-semibold">Approved By</div>
+                </div>
             </div>
         </div>
     </div>
@@ -180,6 +219,7 @@
 
     let employeesData = {};
     let attendanceData = {};
+    let currentEmpData = {};
 
     document.getElementById('payMonth').value = new Date().toISOString().slice(0, 7);
 
@@ -232,9 +272,9 @@
             return;
         }
 
+        currentEmpData = empObj; // For WhatsApp
+
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
-        
-        // EPF Daily Amount එක තෝරාගැනීම (එකක් නැත්නම් Normal Daily Rate එක ගනී)
         const epfDailyRate = parseFloat(empObj.epfBasic || empObj.epfDailyRate || dailyRate);
         const allowance = parseFloat(empObj.allowances || 0);
 
@@ -267,18 +307,16 @@
             totalLoan += parseFloat(dayData.loan || 0);
         });
 
-        // 1. Basic & OT Formulas
+        // 1. Calculations
         const basicTotal = workedDays * dailyRate;
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
         const otTotal = hourlyRate * totalOtHours;
 
-        // 2. EPF & ETF Formulas (Daily EPF Applicable Amount x Worked Days)
         const epfApplicableTotal = workedDays * epfDailyRate;
         const epf8Total = epfApplicableTotal * 0.08;
         const epf12Total = epfApplicableTotal * 0.12;
         const etf3Total = epfApplicableTotal * 0.03;
 
-        // 3. Totals
         const totalEarnings = basicTotal + otTotal + allowance;
         const totalDeductions = totalAdvance + totalLoan + epf8Total;
         const netSalary = totalEarnings - totalDeductions;
@@ -302,6 +340,53 @@
         document.getElementById('dispEtf3').innerText = etf3Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         document.getElementById('dispNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function sendWhatsApp() {
+        const empName = document.getElementById('dispEmpName').innerText;
+        const period = document.getElementById('dispPeriod').innerText;
+        const netSalary = document.getElementById('dispNetSalary').innerText;
+
+        if (empName === '-' || netSalary === '0.00') {
+            alert('කරුණාකර පළමුව සේවකයා සහ මාසය තෝරාගෙන සිටින්න!');
+            return;
+        }
+
+        const basic = document.getElementById('dispBasicTot').innerText;
+        const ot = document.getElementById('dispOtTot').innerText;
+        const deductions = document.getElementById('dispTotalDeductions').innerText;
+
+        // Formatted WhatsApp Message
+        let message = `*RUKMAN ENTERPRISES - SALARY SLIP*\n`;
+        message += `-----------------------------------\n`;
+        message += `👤 *Employee:* ${empName}\n`;
+        message += `📅 *Month:* ${period}\n`;
+        message += `-----------------------------------\n`;
+        message += `💵 *Basic Salary:* LKR ${basic}\n`;
+        message += `⏰ *OT Amount:* LKR ${ot}\n`;
+        message += `🔻 *Deductions:* LKR ${deductions}\n`;
+        message += `-----------------------------------\n`;
+        message += `✅ *NET SALARY:* *LKR ${netSalary}*\n`;
+        message += `-----------------------------------\n`;
+        message += `Thank You!`;
+
+        let phone = currentEmpData.phone || currentEmpData.mobile || '';
+        phone = phone.replace(/[^0-9]/g, '');
+
+        if (phone.startsWith('0')) {
+            phone = '94' + phone.substring(1);
+        }
+
+        const encodedMsg = encodeURIComponent(message);
+        let whatsappUrl = '';
+
+        if (phone) {
+            whatsappUrl = `https://wa.me/${phone}?text=${encodedMsg}`;
+        } else {
+            whatsappUrl = `https://wa.me/?text=${encodedMsg}`;
+        }
+
+        window.open(whatsappUrl, '_blank');
     }
 
     function resetDisplay() {
