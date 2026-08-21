@@ -38,7 +38,7 @@
     <div class="card p-4 mb-4 no-print">
         <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-plus me-2"></i><span id="formTitle">Add New Employee Details</span></h4>
         <form id="payrollForm" onsubmit="saveEmployee(event)">
-            <input type="hidden" id="editIndex" value="-1">
+            <input type="hidden" id="editKey" value="">
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Employee ID *</label>
@@ -68,9 +68,9 @@
                     <input type="number" id="basicSalary" class="form-control" step="0.01" required value="0">
                 </div>
                 <div class="col-md-3">
-    <label class="form-label fw-semibold">Daily EPF Applicable Amount (LKR) (Optional)</label>
-    <input type="number" id="epfSalary" class="form-control" step="0.01" placeholder="දිනක EPF මුදල (Optional)">
-</div>
+                    <label class="form-label fw-semibold">Daily EPF Applicable Amount (LKR) (Optional)</label>
+                    <input type="number" id="epfSalary" class="form-control" step="0.01" placeholder="දිනක EPF මුදල (Optional)">
+                </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Allowances (LKR)</label>
                     <input type="number" id="allowances" class="form-control" step="0.01" value="0">
@@ -118,8 +118,30 @@
     </div>
 </div>
 
+<!-- Firebase SDK Integrations -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
-    let employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
+    // Firebase Config Options
+    const firebaseConfig = {
+        databaseURL: "https://rukman-payroll-default-rtdb.firebaseio.com"
+    };
+    
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const empRef = database.ref('employees');
+
+    let employees = {};
+
+    // Realtime Database Listener
+    empRef.on('value', (snapshot) => {
+        employees = snapshot.val() || {};
+        renderTable();
+    });
 
     function saveEmployee(event) {
         event.preventDefault();
@@ -132,17 +154,18 @@
         const basic = parseFloat(document.getElementById('basicSalary').value) || 0;
         const epfBasic = parseFloat(document.getElementById('epfSalary').value) || 0;
         const allowances = parseFloat(document.getElementById('allowances').value) || 0;
-        const editIndex = parseInt(document.getElementById('editIndex').value);
+        const editKey = document.getElementById('editKey').value;
 
         const empData = { id, name, branch, bankAcc, whatsapp, basic, epfBasic, allowances };
 
-        if (editIndex === -1) {
-            employees.push(empData);
+        if (!editKey) {
+            // New Entry
+            empRef.push(empData);
         } else {
-            employees[editIndex] = empData;
+            // Update Existing Record
+            database.ref('employees/' + editKey).set(empData);
         }
 
-        saveAndRefresh();
         resetForm();
     }
 
@@ -151,20 +174,24 @@
         const filterBranch = document.getElementById('filterBranch').value;
         tbody.innerHTML = '';
 
+        let empList = Object.keys(employees).map(key => ({
+            key: key,
+            ...employees[key]
+        }));
+
         // Sort A-Z
-        let sortedEmployees = [...employees].sort((a, b) => a.name.localeCompare(b.name));
+        empList.sort((a, b) => a.name.localeCompare(b.name));
 
         if (filterBranch !== 'All') {
-            sortedEmployees = sortedEmployees.filter(e => e.branch === filterBranch);
+            empList = empList.filter(e => e.branch === filterBranch);
         }
 
-        if (sortedEmployees.length === 0) {
+        if (empList.length === 0) {
             tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">කිසිදු දත්තයක් ඇතුළත් කර නොමැත.</td></tr>`;
             return;
         }
 
-        sortedEmployees.forEach((emp) => {
-            const originalIndex = employees.findIndex(e => e.id === emp.id);
+        empList.forEach((emp) => {
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${emp.id}</strong></td>
@@ -176,16 +203,16 @@
                     <td class="fw-semibold text-primary">${emp.epfBasic.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td>${emp.allowances.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td class="no-print text-center">
-                        <button class="btn btn-sm btn-warning me-1" onclick="editEmployee(${originalIndex})" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${originalIndex})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-sm btn-warning me-1" onclick="editEmployee('${emp.key}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${emp.key}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `;
         });
     }
 
-    function editEmployee(index) {
-        const emp = employees[index];
+    function editEmployee(key) {
+        const emp = employees[key];
         document.getElementById('empId').value = emp.id;
         document.getElementById('empName').value = emp.name;
         document.getElementById('branch').value = emp.branch;
@@ -194,7 +221,7 @@
         document.getElementById('basicSalary').value = emp.basic;
         document.getElementById('epfSalary').value = emp.epfBasic;
         document.getElementById('allowances').value = emp.allowances;
-        document.getElementById('editIndex').value = index;
+        document.getElementById('editKey').value = key;
 
         document.getElementById('formTitle').innerText = 'Edit Employee Details';
         document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-arrows-rotate me-2"></i>Update Details';
@@ -202,28 +229,19 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function deleteEmployee(index) {
+    function deleteEmployee(key) {
         if (confirm('ඔබට විශ්වාසද මෙම සේවක තොරතුරු ඉවත් කිරීමට අවශ්‍ය බව?')) {
-            employees.splice(index, 1);
-            saveAndRefresh();
+            database.ref('employees/' + key).remove();
         }
     }
 
     function resetForm() {
         document.getElementById('payrollForm').reset();
-        document.getElementById('editIndex').value = '-1';
+        document.getElementById('editKey').value = '';
         document.getElementById('formTitle').innerText = 'Add New Employee Details';
         document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Save Details';
         document.getElementById('cancelBtn').classList.add('d-none');
     }
-
-    function saveAndRefresh() {
-        localStorage.setItem('payroll_employees', JSON.stringify(employees));
-        renderTable();
-    }
-
-    // Initial Render
-    renderTable();
 </script>
 
 </body>
