@@ -329,7 +329,7 @@
 
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
         
-        // EPF Daily Rate එක සටහන් කර නැතිනම් (හෝ null / empty / 0 නම්) epfDailyRate = 0 වේ.
+        // EPF Daily Rate
         const rawEpfRate = empObj.epfBasic || empObj.epfDailyRate;
         const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
         
@@ -369,7 +369,6 @@
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
         const otTotal = hourlyRate * totalOtHours;
 
-        // EPF Daily Rate එක 0 නම් EPF/ETF කිසිවක් ගණනය නොවේ
         let epf8Total = 0;
         let epf12Total = 0;
         let etf3Total = 0;
@@ -382,7 +381,9 @@
         }
 
         const totalEarnings = basicTotal + otTotal + allowance;
-        const totalDeductions = totalAdvance + totalLoan + epf8Total;
+        
+        // Loan එක Total Deductions එකෙන් ඉවත් කරන ලදී (පෙන්වීම සඳහා පමණක් භාවිතා වේ)
+        const totalDeductions = totalAdvance + epf8Total; 
         const netSalary = totalEarnings - totalDeductions;
 
         // Render Values
@@ -396,7 +397,10 @@
         document.getElementById('dispTotalEarnings').innerText = totalEarnings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        // Loan ප්‍රමාණය පෙන්වන්න පමණක් සකසන ලදී
         document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
         document.getElementById('dispEpfTot').innerText = epf8Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispTotalDeductions').innerText = totalDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
@@ -429,7 +433,6 @@
                 useCORS: true
             });
 
-            // Convert Canvas to Blob for Copying
             canvas.toBlob(async (blob) => {
                 if (!blob) {
                     alert('Image එක සකස් කරගැනීමට නොහැකි විය.');
