@@ -104,9 +104,9 @@
                 <h3 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip Generator</h3>
                 <p class="mb-0 text-light opacity-75">Rukman Payroll System - Matara & Weligama Branches</p>
             </div>
-            <!-- Main Navigation Buttons -->
+            <!-- Main Dashboard Navigation Link (main.html) -->
             <div class="d-flex gap-2">
-                <a href="index.html" class="btn btn-warning btn-custom"><i class="fa-solid fa-house me-1"></i> Main</a>
+                <a href="main.html" class="btn btn-warning btn-custom"><i class="fa-solid fa-house me-1"></i> Main</a>
                 <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-user-plus me-1"></i> Registration</a>
                 <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-1"></i> Attendance</a>
             </div>
@@ -384,7 +384,7 @@
 
         const totalEarnings = basicTotal + otTotal + allowance;
         
-        // Loan එක Total Deductions එකෙන් ඉවත් කරන ලදී (පෙන්වීම සඳහා පමණි)
+        // Loan එක Total Deductions එකෙන් ඉවත් කර ඇත
         const totalDeductions = totalAdvance + epf8Total; 
         const netSalary = totalEarnings - totalDeductions;
 
@@ -400,7 +400,7 @@
 
         document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
-        // Loan ප්‍රමාණය පෙන්වන්න පමණක් සකසන ලදී
+        // Loan ප්‍රමාණය Display කිරීමට පමණි
         document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
         document.getElementById('dispEpfTot').innerText = epf8Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
