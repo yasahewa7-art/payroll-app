@@ -70,14 +70,13 @@
 
     <!-- Payslip Content Card -->
     <div class="card p-4 mb-4">
-        <!-- Main Title Header -->
         <div class="text-center mb-4">
             <h2 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px;">RUKMAN PAYROLL SYSTEM</h2>
             <p class="text-muted mb-0">Monthly Employee Salary Slip</p>
             <hr class="my-3">
         </div>
 
-        <!-- Employee Info Section -->
+        <!-- Employee Details Section -->
         <div class="row mb-4 fs-6">
             <div class="col-6">
                 <p class="mb-2"><strong>Employee Name:</strong> <span id="dispName">-</span></p>
@@ -274,7 +273,7 @@
             return;
         }
 
-        // Display Info
+        // Display Employee Info
         document.getElementById('dispName').innerText = empObj.name || '-';
         document.getElementById('dispId').innerText = empObj.id || empObj.key || '-';
         document.getElementById('dispDesignation').innerText = empObj.designation || '-';
@@ -286,7 +285,7 @@
         const otRate = parseFloat(empObj.otRate || (dailyRate > 0 ? (dailyRate / 8) * 1.5 : 0));
         document.getElementById('dispDailyRate').innerText = dailyRate.toLocaleString('en-US', {minimumFractionDigits: 2});
 
-        // Attendance Data Processing (Flexible Key Search)
+        // Attendance Data Calculation
         const key = `${String(empId).trim()}_${month}`;
         const monthAttendance = attendanceData[key] || {};
 
