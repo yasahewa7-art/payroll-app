@@ -21,10 +21,10 @@
       transition: opacity 0.8s ease, visibility 0.8s ease;
     }
 
+    /* Logo Blink (pulse animation) එක නවතා කෙළින්ම සාමාන්‍ය ලෙස පෙනෙන සේ සකසා ඇත */
     .splash-logo {
       width: 180px;
       height: auto;
-      animation: pulse 1.5s infinite ease-in-out;
     }
 
     .splash-title {
@@ -33,12 +33,6 @@
       font-weight: bold;
       color: #333;
       font-family: Arial, sans-serif;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.95); opacity: 0.8; }
-      50% { transform: scale(1.05); opacity: 1; }
-      100% { transform: scale(0.95); opacity: 0.8; }
     }
 
     /* Main Dashboard UI */
@@ -75,8 +69,8 @@
 
 <!-- Splash Screen (Opens First with Logo) -->
 <div id="splashScreen">
-  <img src="logo.jpg" alt="Rukman Engineering Logo" class="splash-logo" onerror="this.src='https://via.placeholder.com/150?text=Rukman+Logo'">
-  <div class="splash-title">Rukman Engineering (Pvt) Ltd</div>
+  <img src="logo.jpg" alt="NUVIA Labs Logo" class="splash-logo" onerror="this.src='https://via.placeholder.com/150?text=NUVIA+Labs'">
+  <div class="splash-title">NUVIA Labs</div>
 </div>
 
 <!-- Main Dashboard Container -->
