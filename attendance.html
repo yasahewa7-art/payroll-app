@@ -144,7 +144,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // Firebase Setup
     const firebaseConfig = {
         databaseURL: "https://rukman-payroll-default-rtdb.firebaseio.com"
     };
@@ -161,14 +160,12 @@
 
     document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
-    // Fetch Employees Realtime
     empRef.on('value', (snapshot) => {
         const data = snapshot.val() || {};
         employees = Object.keys(data).map(key => ({ key, ...data[key] }));
         populateEmployeeDropdown();
     });
 
-    // Fetch Attendance Realtime
     attRef.on('value', (snapshot) => {
         attendanceData = snapshot.val() || {};
         loadAttendanceSheet();
@@ -179,19 +176,22 @@
         const currentSelected = empSelect.value;
         empSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
         
-        let sortedEmployees = [...employees].sort((a, b) => a.name.localeCompare(b.name));
+        let sortedEmployees = [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         sortedEmployees.forEach(emp => {
-            empSelect.innerHTML += `<option value="${emp.id}">${emp.name} (${emp.id}) - ${emp.branch}</option>`;
+            const empIdStr = String(emp.id || emp.key).trim();
+            empSelect.innerHTML += `<option value="${empIdStr}">${emp.name} (${empIdStr}) - ${emp.branch || ''}</option>`;
         });
         
         empSelect.value = currentSelected;
     }
 
-    // Dynamic OT Calculation Function (Morning + Evening)
-    function calculateOtHours(inVal, outVal) {
+    // Updated Dynamic OT Calculation (Handles Overnight OT & Early In)
+    function calculateOtHours(inVal, outVal, status) {
+        if (status === 'Absent' || status === 'Off Day') return 0;
+
         let totalOt = 0;
 
-        // Morning OT (Before 08:00 AM)
+        // 1. Early Morning OT (Before 08:00 AM)
         if (inVal) {
             const [inH, inM] = inVal.split(':').map(Number);
             const inMinutes = inH * 60 + inM;
@@ -202,11 +202,16 @@
             }
         }
 
-        // Evening OT (After 17:30 PM)
+        // 2. Evening & Overnight OT (After 17:30 PM / Next Morning AM)
         if (outVal) {
             const [outH, outM] = outVal.split(':').map(Number);
             let outMinutes = outH * 60 + outM;
-            const targetOutMinutes = 17 * 60 + 30; // 17:30 PM
+            const targetOutMinutes = 17 * 60 + 30; // 17:30 PM (1050 mins)
+
+            // If Out Time is Next Day Morning (e.g., 01:00 AM to 07:59 AM)
+            if (outMinutes < targetOutMinutes) {
+                outMinutes += 24 * 60; // Add 24 Hours (1440 mins)
+            }
 
             if (outMinutes > targetOutMinutes) {
                 totalOt += (outMinutes - targetOutMinutes) / 60;
@@ -229,11 +234,11 @@
             return;
         }
 
-        const empObj = employees.find(e => String(e.id).trim() === String(empId).trim());
+        const empObj = employees.find(e => String(e.id || e.key).trim() === String(empId).trim());
         if (empObj) {
-            document.getElementById('printEmpName').innerText = empObj.name;
-            document.getElementById('printEmpId').innerText = empObj.id;
-            document.getElementById('printEmpBranch').innerText = empObj.branch;
+            document.getElementById('printEmpName').innerText = empObj.name || '-';
+            document.getElementById('printEmpId').innerText = empObj.id || empObj.key || '-';
+            document.getElementById('printEmpBranch').innerText = empObj.branch || '-';
         }
         document.getElementById('printMonth').innerText = month;
 
@@ -252,7 +257,7 @@
             const dateStr = `${month}-${d < 10 ? '0' + d : d}`;
             const dayRecord = currentEmpMonthData[dateStr] || { in: '', out: '', status: 'Present', ot: 0, advance: 0, loan: 0 };
 
-            let calculatedOt = calculateOtHours(dayRecord.in, dayRecord.out);
+            let calculatedOt = calculateOtHours(dayRecord.in, dayRecord.out, dayRecord.status);
 
             totalOt += calculatedOt;
             totalAdvance += parseFloat(dayRecord.advance || 0);
@@ -328,7 +333,7 @@
         const advVal = parseFloat(document.getElementById(`adv_${dateStr}`).value) || 0;
         const loanVal = parseFloat(document.getElementById(`loan_${dateStr}`).value) || 0;
 
-        let otHours = calculateOtHours(inVal, outVal);
+        let otHours = calculateOtHours(inVal, outVal, statusVal);
 
         database.ref(`attendance/${key}/${dateStr}`).set({
             in: inVal,
