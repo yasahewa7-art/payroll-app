@@ -139,20 +139,52 @@
     </div>
 </div>
 
+<!-- Firebase SDK Integrations -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
-    let employees = JSON.parse(localStorage.getItem('payroll_employees')) || [];
-    let attendanceData = JSON.parse(localStorage.getItem('payroll_attendance')) || {};
+    // Firebase Setup
+    const firebaseConfig = {
+        databaseURL: "https://rukman-payroll-default-rtdb.firebaseio.com"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const empRef = database.ref('employees');
+    const attRef = database.ref('attendance');
+
+    let employees = [];
+    let attendanceData = {};
 
     document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
+    // Fetch Employees Realtime
+    empRef.on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        employees = Object.keys(data).map(key => ({ key, ...data[key] }));
+        populateEmployeeDropdown();
+    });
+
+    // Fetch Attendance Realtime
+    attRef.on('value', (snapshot) => {
+        attendanceData = snapshot.val() || {};
+        loadAttendanceSheet();
+    });
+
     function populateEmployeeDropdown() {
         const empSelect = document.getElementById('attEmpSelect');
+        const currentSelected = empSelect.value;
         empSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
         
         let sortedEmployees = [...employees].sort((a, b) => a.name.localeCompare(b.name));
         sortedEmployees.forEach(emp => {
             empSelect.innerHTML += `<option value="${emp.id}">${emp.name} (${emp.id}) - ${emp.branch}</option>`;
         });
+        
+        empSelect.value = currentSelected;
     }
 
     // Dynamic OT Calculation Function (Morning + Evening)
@@ -209,7 +241,7 @@
         const daysInMonth = new Date(year, m, 0).getDate();
         const key = `${empId}_${month}`;
         
-        if (!attendanceData[key]) attendanceData[key] = {};
+        const currentEmpMonthData = attendanceData[key] || {};
 
         tbody.innerHTML = '';
         let totalOt = 0;
@@ -218,12 +250,9 @@
 
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${month}-${d < 10 ? '0' + d : d}`;
-            const dayRecord = attendanceData[key][dateStr] || { in: '', out: '', status: 'Present', ot: 0, advance: 0, loan: 0 };
+            const dayRecord = currentEmpMonthData[dateStr] || { in: '', out: '', status: 'Present', ot: 0, advance: 0, loan: 0 };
 
-            // Recalculate OT & save into object memory
             let calculatedOt = calculateOtHours(dayRecord.in, dayRecord.out);
-            dayRecord.ot = calculatedOt;
-            attendanceData[key][dateStr] = dayRecord;
 
             totalOt += calculatedOt;
             totalAdvance += parseFloat(dayRecord.advance || 0);
@@ -251,9 +280,6 @@
                 </tr>`;
         }
 
-        // Save synchronized data with recalculated OT values to localStorage
-        localStorage.setItem('payroll_attendance', JSON.stringify(attendanceData));
-
         const otStr = `${totalOt.toFixed(1)} Hrs`;
         const advStr = `${totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2})} LKR`;
         const loanStr = `${totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2})} LKR`;
@@ -275,17 +301,24 @@
         const [year, m] = month.split('-');
         const daysInMonth = new Date(year, m, 0).getDate();
         const key = `${empId}_${month}`;
-        if (!attendanceData[key]) attendanceData[key] = {};
 
+        const updates = {};
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${month}-${d < 10 ? '0' + d : d}`;
-            const existingAdv = attendanceData[key][dateStr]?.advance || 0;
-            const existingLoan = attendanceData[key][dateStr]?.loan || 0;
+            const existingAdv = attendanceData[key]?.[dateStr]?.advance || 0;
+            const existingLoan = attendanceData[key]?.[dateStr]?.loan || 0;
 
-            attendanceData[key][dateStr] = { in: '08:00', out: '17:30', status: 'Present', ot: 0, advance: existingAdv, loan: existingLoan };
+            updates[`${key}/${dateStr}`] = { 
+                in: '08:00', 
+                out: '17:30', 
+                status: 'Present', 
+                ot: 0, 
+                advance: existingAdv, 
+                loan: existingLoan 
+            };
         }
-        localStorage.setItem('payroll_attendance', JSON.stringify(attendanceData));
-        loadAttendanceSheet();
+        
+        attRef.update(updates);
     }
 
     function updateRow(key, dateStr) {
@@ -295,26 +328,23 @@
         const advVal = parseFloat(document.getElementById(`adv_${dateStr}`).value) || 0;
         const loanVal = parseFloat(document.getElementById(`loan_${dateStr}`).value) || 0;
 
-        if (!attendanceData[key]) attendanceData[key] = {};
-
         let otHours = calculateOtHours(inVal, outVal);
 
-        attendanceData[key][dateStr] = { in: inVal, out: outVal, status: statusVal, ot: otHours, advance: advVal, loan: loanVal };
-        localStorage.setItem('payroll_attendance', JSON.stringify(attendanceData));
-        loadAttendanceSheet();
+        database.ref(`attendance/${key}/${dateStr}`).set({
+            in: inVal,
+            out: outVal,
+            status: statusVal,
+            ot: otHours,
+            advance: advVal,
+            loan: loanVal
+        });
     }
 
     function clearDayRecord(key, dateStr) {
         if (confirm(`${dateStr} දිනයේ තොරතුරු ඉවත් කිරීමට අවශ්‍යද?`)) {
-            if (attendanceData[key] && attendanceData[key][dateStr]) {
-                delete attendanceData[key][dateStr];
-                localStorage.setItem('payroll_attendance', JSON.stringify(attendanceData));
-                loadAttendanceSheet();
-            }
+            database.ref(`attendance/${key}/${dateStr}`).remove();
         }
     }
-
-    populateEmployeeDropdown();
 </script>
 
 </body>
