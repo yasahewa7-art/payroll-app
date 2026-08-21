@@ -51,9 +51,12 @@
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-5 d-flex gap-2">
                 <button class="btn btn-warning btn-custom w-100 text-dark fw-bold" onclick="autoFillFullMonth()">
-                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Auto-Fill Full Month (08:00 - 17:30)
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Auto-Fill Month (08:00 - 17:30)
+                </button>
+                <button class="btn btn-success btn-custom fw-bold px-4" onclick="saveAllRows()">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Save Sheet
                 </button>
             </div>
         </div>
@@ -89,6 +92,11 @@
                 </tbody>
             </table>
         </div>
+        <div class="text-end mt-3 no-print">
+            <button class="btn btn-success btn-lg fw-bold px-5" onclick="saveAllRows()">
+                <i class="fa-solid fa-floppy-disk me-2"></i>Save Attendance Changes
+            </button>
+        </div>
     </div>
 </div>
 
@@ -111,13 +119,11 @@
 
     document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
-    // Fetch Employees Data
     database.ref('employees').on('value', (snapshot) => {
         employeesData = snapshot.val() || {};
         populateEmpDropdown();
     });
 
-    // Fetch Attendance Data
     database.ref('attendance').on('value', (snapshot) => {
         savedAttendanceData = snapshot.val() || {};
         generateMonthSheet();
@@ -234,7 +240,9 @@
             };
         }
 
-        database.ref().update(updates);
+        database.ref().update(updates).then(() => {
+            alert('සාර්ථකව Auto-Fill කර Save විය!');
+        });
     }
 
     function updateRow(dateStr) {
@@ -243,6 +251,8 @@
         const attKey = `${empId}_${month}`;
 
         const row = document.getElementById(`row_${dateStr}`);
+        if (!row) return;
+
         const inputs = row.getElementsByTagName('input');
         const select = row.getElementsByTagName('select')[0];
 
@@ -261,13 +271,13 @@
             const inMin = inH * 60 + inM;
             let outMin = outH * 60 + outM;
 
-            // Midnight Shift (පහුවෙනිදා පාන්දර වන තෙක් වැඩ කළහොත්)
+            // පසුදා පාන්දර වන තෙක් වැඩකළ අවස්ථා සඳහා (උදා: 01:30 AM)
             if (outMin < inMin) {
-                outMin += 24 * 60;
+                outMin += 24 * 60; // පැය 24ක් එකතු කරයි
             }
 
-            const standardInMin = 8 * 60;        // 08:00
-            const standardOutMin = 17 * 60 + 30; // 17:30
+            const standardInMin = 8 * 60;        // 08:00 (පෙ.ව. 8:00)
+            const standardOutMin = 17 * 60 + 30; // 17:30 (ප.ව. 5:30)
 
             // 1. උදෑසන 08:00 ට පෙර OT
             let morningOtMin = 0;
@@ -275,7 +285,7 @@
                 morningOtMin = standardInMin - inMin;
             }
 
-            // 2. සවස 17:30 න් පසු / පාන්දර වන තෙක් OT
+            // 2. සවස 17:30 න් පසු / රාත්‍රී / පාන්දර OT
             let eveningOtMin = 0;
             if (outMin > standardOutMin) {
                 eveningOtMin = outMin - standardOutMin;
@@ -292,6 +302,26 @@
             advance,
             loan
         });
+    }
+
+    function saveAllRows() {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+
+        if (!month || !empId) {
+            alert('කරුණාකර Month සහ Employee තෝරන්න!');
+            return;
+        }
+
+        const [year, monthNum] = month.split('-');
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+            updateRow(dateStr);
+        }
+
+        alert('සියලුම දත්ත සාර්ථකව Save විය!');
     }
 
     function clearRow(dateStr) {
