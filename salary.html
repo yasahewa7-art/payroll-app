@@ -328,7 +328,11 @@
         currentEmpData = empObj;
 
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
-        const epfDailyRate = parseFloat(empObj.epfBasic || empObj.epfDailyRate || dailyRate);
+        
+        // EPF Daily Rate එක සටහන් කර නැතිනම් (හෝ null / empty / 0 නම්) epfDailyRate = 0 වේ.
+        const rawEpfRate = empObj.epfBasic || empObj.epfDailyRate;
+        const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
+        
         const allowance = parseFloat(empObj.allowances || 0);
 
         document.getElementById('dispEmpName').innerText = empObj.name || '-';
@@ -365,10 +369,17 @@
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
         const otTotal = hourlyRate * totalOtHours;
 
-        const epfApplicableTotal = workedDays * epfDailyRate;
-        const epf8Total = epfApplicableTotal * 0.08;
-        const epf12Total = epfApplicableTotal * 0.12;
-        const etf3Total = epfApplicableTotal * 0.03;
+        // EPF Daily Rate එක 0 නම් EPF/ETF කිසිවක් ගණනය නොවේ
+        let epf8Total = 0;
+        let epf12Total = 0;
+        let etf3Total = 0;
+
+        if (epfDailyRate > 0) {
+            const epfApplicableTotal = workedDays * epfDailyRate;
+            epf8Total = epfApplicableTotal * 0.08;
+            epf12Total = epfApplicableTotal * 0.12;
+            etf3Total = epfApplicableTotal * 0.03;
+        }
 
         const totalEarnings = basicTotal + otTotal + allowance;
         const totalDeductions = totalAdvance + totalLoan + epf8Total;
@@ -429,7 +440,6 @@
 
                 let copied = false;
                 try {
-                    // Copy Image directly to Clipboard
                     const data = [new ClipboardItem({ 'image/png': blob })];
                     await navigator.clipboard.write(data);
                     copied = true;
@@ -437,7 +447,6 @@
                     console.log("Clipboard write not supported, downloading image fallback...", err);
                 }
 
-                // Fallback download if clipboard fails
                 if (!copied) {
                     const link = document.createElement('a');
                     link.download = `Payslip_${empName}_${period}.png`;
@@ -445,7 +454,6 @@
                     link.click();
                 }
 
-                // Phone number processing
                 let phone = currentEmpData.phone || currentEmpData.mobile || '';
                 phone = phone.replace(/[^0-9]/g, '');
                 if (phone.startsWith('0')) {
