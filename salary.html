@@ -96,7 +96,7 @@
         <div class="payslip-header">
             <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">RUKMAN ENTERPRISES</h3>
             <div class="fw-semibold text-secondary" style="font-size: 0.9rem;">(PAYSLIP)</div>
-            <div class="small text-muted">Matara & Weligama Branches | Contact: 07X-XXXXXXX</div>
+            <div class="small text-muted">Matara & Weligama Branches</div>
         </div>
 
         <!-- Employee Info Grid -->
@@ -272,7 +272,7 @@
             return;
         }
 
-        currentEmpData = empObj; // For WhatsApp
+        currentEmpData = empObj;
 
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
         const epfDailyRate = parseFloat(empObj.epfBasic || empObj.epfDailyRate || dailyRate);
@@ -307,7 +307,7 @@
             totalLoan += parseFloat(dayData.loan || 0);
         });
 
-        // 1. Calculations
+        // Calculations
         const basicTotal = workedDays * dailyRate;
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
         const otTotal = hourlyRate * totalOtHours;
@@ -356,7 +356,6 @@
         const ot = document.getElementById('dispOtTot').innerText;
         const deductions = document.getElementById('dispTotalDeductions').innerText;
 
-        // Formatted WhatsApp Message
         let message = `*RUKMAN ENTERPRISES - SALARY SLIP*\n`;
         message += `-----------------------------------\n`;
         message += `👤 *Employee:* ${empName}\n`;
@@ -378,13 +377,7 @@
         }
 
         const encodedMsg = encodeURIComponent(message);
-        let whatsappUrl = '';
-
-        if (phone) {
-            whatsappUrl = `https://wa.me/${phone}?text=${encodedMsg}`;
-        } else {
-            whatsappUrl = `https://wa.me/?text=${encodedMsg}`;
-        }
+        let whatsappUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
 
         window.open(whatsappUrl, '_blank');
     }
