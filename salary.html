@@ -233,7 +233,9 @@
         }
 
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
-        const epfBasicDaily = parseFloat(empObj.epfBasic || 0);
+        
+        // EPF Daily Amount එක තෝරාගැනීම (එකක් නැත්නම් Normal Daily Rate එක ගනී)
+        const epfDailyRate = parseFloat(empObj.epfBasic || empObj.epfDailyRate || dailyRate);
         const allowance = parseFloat(empObj.allowances || 0);
 
         document.getElementById('dispEmpName').innerText = empObj.name || '-';
@@ -265,15 +267,13 @@
             totalLoan += parseFloat(dayData.loan || 0);
         });
 
-        // 1. Basic & OT Formulas (Normal Hourly Rate Calculation)
+        // 1. Basic & OT Formulas
         const basicTotal = workedDays * dailyRate;
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
-        
-        // OT = (දිනක පඩිය / 8) * වැඩකළ පැය ගණන
         const otTotal = hourlyRate * totalOtHours;
 
-        // 2. EPF & ETF Formulas
-        const epfApplicableTotal = workedDays * epfBasicDaily;
+        // 2. EPF & ETF Formulas (Daily EPF Applicable Amount x Worked Days)
+        const epfApplicableTotal = workedDays * epfDailyRate;
         const epf8Total = epfApplicableTotal * 0.08;
         const epf12Total = epfApplicableTotal * 0.12;
         const etf3Total = epfApplicableTotal * 0.03;
