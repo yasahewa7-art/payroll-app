@@ -80,27 +80,40 @@
         .summary-table {
             border-collapse: separate;
             border-spacing: 0;
+            width: 100%;
         }
         .summary-table th {
             background-color: #0f172a !important;
             color: #ffffff !important;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             text-transform: uppercase;
             text-align: center;
-            letter-spacing: 0.5px;
-            padding: 12px 8px;
+            letter-spacing: 0.3px;
+            padding: 8px 4px;
             border: none;
+            white-space: nowrap;
         }
         .summary-table td {
-            font-size: 0.8rem;
-            padding: 10px 8px;
+            font-size: 0.75rem;
+            padding: 8px 4px;
             border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
         }
         .summary-table tbody tr:hover {
             background-color: #f8fafc;
         }
 
-        /* Print Settings */
+        /* Dynamic Page Orientation via CSS */
+        @page {
+            size: auto;
+            margin: 5mm;
+        }
+
+        /* Single Payslip Print Settings */
+        body.print-single {
+            /* Handled dynamically via print script */
+        }
+        
         @media print {
             .no-print { display: none !important; }
             body { 
@@ -110,8 +123,8 @@
                 print-color-adjust: exact !important;
             }
             .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-            
-            /* Single Payslip Print */
+
+            /* When Printing Single Payslip */
             body.print-single .summary-sheet-card { display: none !important; }
             body.print-single .payslip-container { 
                 display: block !important;
@@ -121,12 +134,21 @@
                 box-shadow: none !important;
                 margin: 0 auto !important;
             }
-            @page { size: A5 portrait; margin: 0; }
 
-            /* Summary Print */
+            /* When Printing Summary Sheet (Force Landscape Layout & Adjust Dimensions) */
             body.print-summary .payslip-container { display: none !important; }
-            body.print-summary .summary-sheet-card { display: block !important; width: 100% !important; border: none; shadow: none; }
-            body.print-summary @page { size: A4 landscape; margin: 10mm; }
+            body.print-summary .summary-sheet-card { 
+                display: block !important; 
+                width: 100% !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            body.print-summary .summary-table th, 
+            body.print-summary .summary-table td {
+                font-size: 0.68rem !important;
+                padding: 5px 3px !important;
+            }
         }
     </style>
 </head>
@@ -161,7 +183,7 @@
             </div>
             <div class="col-md-6 d-flex gap-2">
                 <button class="btn btn-primary btn-custom flex-fill" onclick="printSinglePayslip()"><i class="fa-solid fa-print me-1"></i> Print Payslip (A5)</button>
-                <button class="btn btn-info text-white btn-custom flex-fill" onclick="printSummarySheet()"><i class="fa-solid fa-table me-1"></i> Print Summary</button>
+                <button class="btn btn-info text-white btn-custom flex-fill" onclick="printSummarySheet()"><i class="fa-solid fa-table me-1"></i> Print Summary (Landscape)</button>
                 <button class="btn btn-success btn-custom flex-fill" id="btnSendWhatsapp" onclick="sendWhatsAppImage()"><i class="fa-brands fa-whatsapp me-1"></i> WhatsApp</button>
             </div>
         </div>
@@ -324,7 +346,7 @@
                 <tbody id="summaryTableBody">
                     <tr><td colspan="13" class="text-center py-4 text-muted">Loading Employee & Salary Details...</td></tr>
                 </tbody>
-                <tfoot id="summaryTableFoot" class="fw-bold table-dark text-end" style="background-color: #0f172a;">
+                <tfoot id="summaryTableFoot" class="fw-bold text-end" style="background-color: #0f172a; color: white;">
                     <!-- Dynamic Totals -->
                 </tfoot>
             </table>
@@ -494,7 +516,7 @@
         document.getElementById('dispNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // Generate All Employees Summary Sheet with full Employee & Salary details
+    // Generate Summary Sheet
     function generateAllEmployeesSummary() {
         const month = document.getElementById('payMonth').value;
         document.getElementById('sumPeriodText').innerText = month || '-';
@@ -571,7 +593,7 @@
                     <td class="text-end text-danger">${advance.toFixed(2)}</td>
                     <td class="text-end text-danger">${epf8.toFixed(2)}</td>
                     <td class="text-end fw-bold text-danger" style="background-color: #fef2f2;">${totalDed.toFixed(2)}</td>
-                    <td class="text-end fw-bold text-primary fs-6" style="background-color: #eff6ff;">${netPay.toFixed(2)}</td>
+                    <td class="text-end fw-bold text-primary" style="background-color: #eff6ff;">${netPay.toFixed(2)}</td>
                 </tr>
             `;
         });
@@ -587,9 +609,20 @@
                 <td class="text-warning">${gAdv.toFixed(2)}</td>
                 <td class="text-warning">${gEpf.toFixed(2)}</td>
                 <td class="text-danger">${gDed.toFixed(2)}</td>
-                <td class="bg-primary text-white fs-6">${gNet.toFixed(2)}</td>
+                <td class="bg-primary text-white">${gNet.toFixed(2)}</td>
             </tr>
         `;
+    }
+
+    // Inject @page CSS dynamically before printing
+    function setPageOrientation(orientation) {
+        let styleSheet = document.getElementById("printOrientationStyle");
+        if (!styleSheet) {
+            styleSheet = document.createElement("style");
+            styleSheet.id = "printOrientationStyle";
+            document.head.appendChild(styleSheet);
+        }
+        styleSheet.innerHTML = `@page { size: A4 ${orientation}; margin: 5mm; }`;
     }
 
     function printSinglePayslip() {
@@ -599,11 +632,13 @@
             return;
         }
         document.body.className = 'print-single';
+        setPageOrientation('portrait');
         window.print();
     }
 
     function printSummarySheet() {
         document.body.className = 'print-summary';
+        setPageOrientation('landscape');
         window.print();
     }
 
