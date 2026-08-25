@@ -13,6 +13,27 @@
         .header-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
         .btn-custom { border-radius: 6px; font-weight: 500; }
         
+        /* Password Overlay Modal */
+        #loginModalOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
         /* A5 Sized Payslip Container */
         .payslip-container {
             width: 148mm;
@@ -109,13 +130,8 @@
             margin: 5mm;
         }
 
-        /* Single Payslip Print Settings */
-        body.print-single {
-            /* Handled dynamically via print script */
-        }
-        
         @media print {
-            .no-print { display: none !important; }
+            .no-print, #loginModalOverlay { display: none !important; }
             body { 
                 background-color: white !important; 
                 margin: 0; padding: 0;
@@ -124,7 +140,7 @@
             }
             .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
 
-            /* When Printing Single Payslip */
+            /* Single Payslip Print */
             body.print-single .summary-sheet-card { display: none !important; }
             body.print-single .payslip-container { 
                 display: block !important;
@@ -135,7 +151,7 @@
                 margin: 0 auto !important;
             }
 
-            /* When Printing Summary Sheet (Force Landscape Layout & Adjust Dimensions) */
+            /* Summary Sheet Print */
             body.print-summary .payslip-container { display: none !important; }
             body.print-summary .summary-sheet-card { 
                 display: block !important; 
@@ -154,7 +170,28 @@
 </head>
 <body class="print-single">
 
-<div class="container my-4">
+<!-- SYSTEM LOGIN MODAL -->
+<div id="loginModalOverlay">
+    <div class="login-card">
+        <div class="mb-3 text-primary">
+            <i class="fa-solid fa-user-lock fa-3x" style="color: #0f172a;"></i>
+        </div>
+        <h4 class="fw-bold mb-1" style="color: #0f172a;">Rukman Payroll</h4>
+        <p class="text-muted small mb-4">කරුණාකර සිස්ටම් එකට ඇතුළු වීමට මුරපදය (Password) ඇතුළත් කරන්න.</p>
+        
+        <form onsubmit="handleLogin(event)">
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold small">Password</label>
+                <input type="password" id="inputPassword" class="form-control form-control-lg" placeholder="Enter Password" required>
+                <div id="loginErrorMsg" class="text-danger small mt-2 d-none"><i class="fa-solid fa-circle-exclamation me-1"></i> වැරදි Password එකකි! නැවත උත්සාහ කරන්න.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 btn-lg btn-custom mb-2">Login to System</button>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN SYSTEM CONTENT (Hidden Until Login) -->
+<div class="container my-4" id="mainContent" style="display: none;">
     <!-- Controls Section -->
     <div class="card header-bg p-4 mb-4 no-print border-0 shadow">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -162,11 +199,12 @@
                 <h3 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip Generator</h3>
                 <p class="mb-0 text-light opacity-75">Rukman Payroll System - Matara & Weligama Branches</p>
             </div>
-            <!-- Main Dashboard Navigation Link (main.html) -->
+            <!-- Main Dashboard Navigation Link -->
             <div class="d-flex gap-2">
                 <a href="main.html" class="btn btn-warning btn-custom"><i class="fa-solid fa-house me-1"></i> Main</a>
                 <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-user-plus me-1"></i> Registration</a>
                 <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-1"></i> Attendance</a>
+                <button onclick="logoutSystem()" class="btn btn-danger btn-custom"><i class="fa-solid fa-right-from-bracket me-1"></i> Logout</button>
             </div>
         </div>
         <hr class="my-3 border-secondary">
@@ -316,7 +354,7 @@
         </div>
     </div>
 
-    <!-- LANDING STYLE: ALL EMPLOYEES SUMMARY SHEET SECTION -->
+    <!-- SUMMARY SHEET SECTION -->
     <div class="summary-sheet-card my-4" id="summarySheetCard">
         <div class="text-center mb-4 border-bottom pb-3">
             <h3 class="fw-bold mb-1 text-uppercase" style="color: #0f172a; letter-spacing: 0.5px;">RUKMAN ENTERPRISES</h3>
@@ -359,31 +397,81 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    const firebaseConfig = {
-        databaseURL: "https://rukman-payroll-default-rtdb.firebaseio.com"
-    };
+    // ----------------------------------------------------
+    // SYSTEM PASSWORD CONFIGURATION
+    // ----------------------------------------------------
+    const SYSTEM_PASSWORD = "rukman123"; // <--- ඔබට අවශ්‍ය Password එක මෙහි යොදන්න
 
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+    // Check Login Status on Page Load
+    document.addEventListener("DOMContentLoaded", function() {
+        if (sessionStorage.getItem("isPayrollLoggedIn") === "true") {
+            showMainSystem();
+        } else {
+            document.getElementById("loginModalOverlay").style.display = "flex";
+            document.getElementById("mainContent").style.display = "none";
+        }
+    });
+
+    function handleLogin(event) {
+        event.preventDefault();
+        const enteredPass = document.getElementById("inputPassword").value;
+        const errElem = document.getElementById("loginErrorMsg");
+
+        if (enteredPass === SYSTEM_PASSWORD) {
+            sessionStorage.setItem("isPayrollLoggedIn", "true");
+            errElem.classList.add("d-none");
+            showMainSystem();
+        } else {
+            errElem.classList.remove("d-none");
+        }
     }
-    const database = firebase.database();
 
+    function showMainSystem() {
+        document.getElementById("loginModalOverlay").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+        initFirebaseApp();
+    }
+
+    function logoutSystem() {
+        sessionStorage.removeItem("isPayrollLoggedIn");
+        location.reload();
+    }
+
+    // ----------------------------------------------------
+    // FIREBASE & PAYROLL LOGIC
+    // ----------------------------------------------------
+    let firebaseInitialized = false;
     let employeesData = {};
     let attendanceData = {};
     let currentEmpData = {};
 
-    document.getElementById('payMonth').value = new Date().toISOString().slice(0, 7);
+    function initFirebaseApp() {
+        if (firebaseInitialized) return;
 
-    database.ref('employees').on('value', (snapshot) => {
-        employeesData = snapshot.val() || {};
-        populateEmpDropdown();
-        renderAllData();
-    });
+        const firebaseConfig = {
+            databaseURL: "https://rukman-payroll-default-rtdb.firebaseio.com"
+        };
 
-    database.ref('attendance').on('value', (snapshot) => {
-        attendanceData = snapshot.val() || {};
-        renderAllData();
-    });
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        document.getElementById('payMonth').value = new Date().toISOString().slice(0, 7);
+
+        database.ref('employees').on('value', (snapshot) => {
+            employeesData = snapshot.val() || {};
+            populateEmpDropdown();
+            renderAllData();
+        });
+
+        database.ref('attendance').on('value', (snapshot) => {
+            attendanceData = snapshot.val() || {};
+            renderAllData();
+        });
+
+        firebaseInitialized = true;
+    }
 
     function populateEmpDropdown() {
         const select = document.getElementById('payEmpSelect');
@@ -411,7 +499,6 @@
         generateAllEmployeesSummary();
     }
 
-    // Individual Payslip Calculation
     function calculateSalary() {
         const month = document.getElementById('payMonth').value;
         const selectedEmpId = document.getElementById('payEmpSelect').value;
@@ -437,11 +524,8 @@
         currentEmpData = empObj;
 
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
-        
-        // EPF Daily Rate
         const rawEpfRate = empObj.epfBasic || empObj.epfDailyRate;
         const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
-        
         const allowance = parseFloat(empObj.allowances || 0);
 
         document.getElementById('dispEmpName').innerText = empObj.name || '-';
@@ -473,14 +557,11 @@
             totalLoan += parseFloat(dayData.loan || 0);
         });
 
-        // Calculations
         const basicTotal = workedDays * dailyRate;
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
         const otTotal = hourlyRate * totalOtHours;
 
-        let epf8Total = 0;
-        let epf12Total = 0;
-        let etf3Total = 0;
+        let epf8Total = 0, epf12Total = 0, etf3Total = 0;
 
         if (epfDailyRate > 0) {
             const epfApplicableTotal = workedDays * epfDailyRate;
@@ -493,30 +574,21 @@
         const totalDeductions = totalAdvance + epf8Total; 
         const netSalary = totalEarnings - totalDeductions;
 
-        // Render Values
         document.getElementById('dispDays').innerText = workedDays;
         document.getElementById('dispBasicTot').innerText = basicTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
         document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
         document.getElementById('dispOtTot').innerText = otTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
         document.getElementById('dispAllowanceTot').innerText = allowance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispTotalEarnings').innerText = totalEarnings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
         document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
         document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
         document.getElementById('dispEpfTot').innerText = epf8Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispTotalDeductions').innerText = totalDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
         document.getElementById('dispEpf12').innerText = epf12Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispEtf3').innerText = etf3Total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
         document.getElementById('dispNetSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // Generate Summary Sheet
     function generateAllEmployeesSummary() {
         const month = document.getElementById('payMonth').value;
         document.getElementById('sumPeriodText').innerText = month || '-';
@@ -546,9 +618,7 @@
             const attKey = `${empId}_${month}`;
             const monthAtt = attendanceData[attKey] || {};
 
-            let workedDays = 0;
-            let otHours = 0;
-            let advance = 0;
+            let workedDays = 0, otHours = 0, advance = 0;
 
             Object.keys(monthAtt).forEach(dateStr => {
                 const dayData = monthAtt[dateStr];
@@ -614,7 +684,6 @@
         `;
     }
 
-    // Inject @page CSS dynamically before printing
     function setPageOrientation(orientation) {
         let styleSheet = document.getElementById("printOrientationStyle");
         if (!styleSheet) {
@@ -642,7 +711,6 @@
         window.print();
     }
 
-    // Convert Payslip Card to Image, Copy to Clipboard & Redirect to WhatsApp
     async function sendWhatsAppImage() {
         const empName = document.getElementById('dispEmpName').innerText;
         const period = document.getElementById('dispPeriod').innerText;
@@ -660,10 +728,7 @@
         btn.disabled = true;
 
         try {
-            const canvas = await html2canvas(payslipElem, {
-                scale: 2,
-                useCORS: true
-            });
+            const canvas = await html2canvas(payslipElem, { scale: 2, useCORS: true });
 
             canvas.toBlob(async (blob) => {
                 if (!blob) {
@@ -679,7 +744,7 @@
                     await navigator.clipboard.write(data);
                     copied = true;
                 } catch (err) {
-                    console.log("Clipboard write not supported, downloading image fallback...", err);
+                    console.log("Clipboard fallback...", err);
                 }
 
                 if (!copied) {
