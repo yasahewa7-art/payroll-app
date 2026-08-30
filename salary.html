@@ -439,8 +439,12 @@
         const currVal = select.value;
         select.innerHTML = '<option value="">-- Choose Employee --</option>';
 
-        let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
-        sortedList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+       let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
+sortedList.sort((a, b) => {
+    const idA = parseInt(a.id || a.key || 0);
+    const idB = parseInt(b.id || b.key || 0);
+    return idA - idB;
+});
 
         sortedList.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
