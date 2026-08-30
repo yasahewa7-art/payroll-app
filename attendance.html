@@ -71,7 +71,6 @@
     <div class="card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h4 class="fw-bold text-dark mb-0">Attendance & Deductions Sheet</h4>
-            <!-- ඉහත පෙන්වූ නිල් පාට Allowance Badge එක මෙහිදී සම්පූර්ණයෙන්ම ඉවත් කර ඇත -->
             <div class="d-flex gap-2 flex-wrap">
                 <span class="badge bg-success fs-6 p-2">Total OT: <span id="totOtBadge">0.0</span> Hrs</span>
                 <span class="badge bg-warning text-dark fs-6 p-2">Total Advance: <span id="totAdvBadge">0.00</span> LKR</span>
@@ -125,8 +124,12 @@
 
     document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
-    database.ref('employees').on('value', (snapshot) => {
-        employeesData = snapshot.val() || {};
+    // මෙහිදී ඔබගේ database එකේ employees වෙනුවට 'employee' හෝ වෙනත් නමක් ඇත්නම් එයට අදාළව දත්ත ලබා ගනී
+    database.ref('/').on('value', (snapshot) => {
+        const rootData = snapshot.val() || {};
+        // employees හෝ employee යන නමින් ඇති දත්ත ස්වයංක්‍රීයව සොයා ගැනීම
+        employeesData = rootData.employees || rootData.employee || rootData.EmpList || {};
+        console.log("Loaded Employees:", employeesData); // F12 ඔබා Console එකෙන් බලාගත හැක
         populateEmpDropdown();
     });
 
@@ -145,7 +148,9 @@
 
         sortedList.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
-            select.innerHTML += `<option value="${empIdStr}">${emp.name} (${empIdStr}) - ${emp.branch || ''}</option>`;
+            const empName = emp.name || emp.fullName || 'Unknown';
+            const empBranch = emp.branch || '';
+            select.innerHTML += `<option value="${empIdStr}">${empName} (${empIdStr}) - ${empBranch}</option>`;
         });
 
         select.value = currVal;
@@ -166,7 +171,6 @@
         const attKey = `${empId}_${month}`;
         const currentEmpAtt = savedAttendanceData[attKey] || {};
 
-        // Load Monthly Allowance value into input box
         const monthlyAllowVal = currentEmpAtt.monthlyAllowance || 0;
         document.getElementById('monthlyAllowanceInput').value = monthlyAllowVal > 0 ? monthlyAllowVal : '';
 
