@@ -13,7 +13,6 @@
         .header-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
         .btn-custom { border-radius: 6px; font-weight: 500; }
         
-        /* Password Overlay Modal */
         #loginModalOverlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -34,7 +33,6 @@
             text-align: center;
         }
 
-        /* A5 Sized Payslip Container */
         .payslip-container {
             width: 148mm;
             min-height: 210mm;
@@ -76,7 +74,6 @@
             font-size: 0.75rem;
         }
         
-        /* Designer Footer */
         .designer-footer {
             border-top: 1px solid #cbd5e1;
             padding: 6px 12px;
@@ -90,12 +87,11 @@
             object-fit: contain;
         }
 
-        /* Summary Sheet Table Landing Style */
         .summary-sheet-card {
             background: #ffffff;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
         }
         .summary-table {
@@ -109,7 +105,6 @@
             font-size: 0.72rem;
             text-transform: uppercase;
             text-align: center;
-            letter-spacing: 0.3px;
             padding: 8px 4px;
             border: none;
             white-space: nowrap;
@@ -120,15 +115,9 @@
             border-bottom: 1px solid #e2e8f0;
             white-space: nowrap;
         }
-        .summary-table tbody tr:hover {
-            background-color: #f8fafc;
-        }
+        .summary-table tbody tr:hover { background-color: #f8fafc; }
 
-        /* Dynamic Page Orientation via CSS */
-        @page {
-            size: auto;
-            margin: 5mm;
-        }
+        @page { size: auto; margin: 5mm; }
 
         @media print {
             .no-print, #loginModalOverlay { display: none !important; }
@@ -140,7 +129,6 @@
             }
             .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
 
-            /* Single Payslip Print */
             body.print-single .summary-sheet-card { display: none !important; }
             body.print-single .payslip-container { 
                 display: block !important;
@@ -151,7 +139,6 @@
                 margin: 0 auto !important;
             }
 
-            /* Summary Sheet Print */
             body.print-summary .payslip-container { display: none !important; }
             body.print-summary .summary-sheet-card { 
                 display: block !important; 
@@ -160,17 +147,11 @@
                 box-shadow: none !important;
                 padding: 0 !important;
             }
-            body.print-summary .summary-table th, 
-            body.print-summary .summary-table td {
-                font-size: 0.68rem !important;
-                padding: 5px 3px !important;
-            }
         }
     </style>
 </head>
 <body class="print-single">
 
-<!-- SYSTEM LOGIN MODAL -->
 <div id="loginModalOverlay">
     <div class="login-card">
         <div class="mb-3 text-primary">
@@ -190,16 +171,13 @@
     </div>
 </div>
 
-<!-- MAIN SYSTEM CONTENT (Hidden Until Login) -->
 <div class="container my-4" id="mainContent" style="display: none;">
-    <!-- Controls Section -->
     <div class="card header-bg p-4 mb-4 no-print border-0 shadow">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <h3 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip Generator</h3>
                 <p class="mb-0 text-light opacity-75">Rukman Payroll System - Matara & Weligama Branches</p>
             </div>
-            <!-- Main Dashboard Navigation Link -->
             <div class="d-flex gap-2">
                 <a href="main.html" class="btn btn-warning btn-custom"><i class="fa-solid fa-house me-1"></i> Main</a>
                 <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-user-plus me-1"></i> Registration</a>
@@ -229,14 +207,12 @@
 
     <!-- Printable A5 Payslip Template -->
     <div class="payslip-container p-0 mb-5" id="payslipCard">
-        <!-- Header -->
         <div class="payslip-header">
             <h4 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">RUKMAN ENTERPRISES</h4>
             <div class="fw-semibold text-secondary" style="font-size: 0.8rem;">(PAYSLIP)</div>
             <div class="small text-muted" style="font-size: 0.7rem;">Matara & Weligama Branches</div>
         </div>
 
-        <!-- Employee Info Grid -->
         <div class="p-2 px-3 border-bottom border-dark" style="font-size: 0.8rem;">
             <div class="row g-1">
                 <div class="col-6">
@@ -252,7 +228,6 @@
             </div>
         </div>
 
-        <!-- Earnings & Deductions Table -->
         <table class="table table-bordered payslip-table mb-0 align-middle">
             <thead>
                 <tr>
@@ -290,10 +265,8 @@
             </tbody>
         </table>
 
-        <!-- Employer Contributions & Net Pay Section -->
         <div class="p-2 px-3">
             <div class="row align-items-center">
-                <!-- Employer Contributions -->
                 <div class="col-6">
                     <div class="p-2 border rounded bg-light" style="font-size: 0.72rem;">
                         <div class="fw-bold border-bottom pb-1 mb-1 text-secondary">Employer Contributions</div>
@@ -308,7 +281,6 @@
                     </div>
                 </div>
 
-                <!-- Net Pay Box -->
                 <div class="col-6">
                     <div class="net-pay-box rounded">
                         <div class="net-pay-header">EMPLOYEE NET PAY</div>
@@ -320,7 +292,6 @@
             </div>
         </div>
 
-        <!-- Signatures -->
         <div class="p-3 pt-3">
             <div class="row text-center" style="font-size: 0.7rem;">
                 <div class="col-4">
@@ -338,7 +309,6 @@
             </div>
         </div>
 
-        <!-- Designer Footer -->
         <div class="designer-footer d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <img src="https://raw.githubusercontent.com/yasahewa7-art/payroll-app/main/logo.jpg" alt="NUVIA Labs" class="designer-logo" crossorigin="anonymous">
@@ -357,7 +327,7 @@
     <!-- SUMMARY SHEET SECTION -->
     <div class="summary-sheet-card my-4" id="summarySheetCard">
         <div class="text-center mb-4 border-bottom pb-3">
-            <h3 class="fw-bold mb-1 text-uppercase" style="color: #0f172a; letter-spacing: 0.5px;">RUKMAN ENTERPRISES</h3>
+            <h3 class="fw-bold mb-1 text-uppercase" style="color: #0f172a;">RUKMAN ENTERPRISES</h3>
             <h5 class="fw-semibold text-primary mb-1">ALL EMPLOYEES SALARY SUMMARY SHEET</h5>
             <div class="badge bg-slate-100 text-dark border px-3 py-2 fw-bold" style="font-size: 0.85rem; background-color: #f1f5f9;">Pay Period: <span id="sumPeriodText">-</span></div>
         </div>
@@ -382,27 +352,20 @@
                     </tr>
                 </thead>
                 <tbody id="summaryTableBody">
-                    <tr><td colspan="13" class="text-center py-4 text-muted">Loading Employee & Salary Details...</td></tr>
+                    <tr><td colspan="13" class="text-center py-4 text-muted">Loading Data...</td></tr>
                 </tbody>
-                <tfoot id="summaryTableFoot" class="fw-bold text-end" style="background-color: #0f172a; color: white;">
-                    <!-- Dynamic Totals -->
-                </tfoot>
+                <tfoot id="summaryTableFoot" class="fw-bold text-end" style="background-color: #0f172a; color: white;"></tfoot>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // ----------------------------------------------------
-    // SYSTEM PASSWORD CONFIGURATION
-    // ----------------------------------------------------
     const SYSTEM_PASSWORD = "rukman123";
 
-    // Check Login Status on Page Load
     document.addEventListener("DOMContentLoaded", function() {
         if (sessionStorage.getItem("isPayrollLoggedIn") === "true") {
             showMainSystem();
@@ -437,13 +400,10 @@
         location.reload();
     }
 
-    // ----------------------------------------------------
-    // FIREBASE & PAYROLL LOGIC
-    // ----------------------------------------------------
     let firebaseInitialized = false;
     let employeesData = {};
     let attendanceData = {};
-    let currentEmpData = {};
+    let monthlyAllowancesData = {};
 
     function initFirebaseApp() {
         if (firebaseInitialized) return;
@@ -470,6 +430,11 @@
             renderAllData();
         });
 
+        database.ref('monthly_allowances').on('value', (snapshot) => {
+            monthlyAllowancesData = snapshot.val() || {};
+            renderAllData();
+        });
+
         firebaseInitialized = true;
     }
 
@@ -490,13 +455,23 @@
     }
 
     function onMonthOrEmpChange() {
-        calculateSalary();
-        generateAllEmployeesSummary();
+        renderAllData();
     }
 
     function renderAllData() {
         calculateSalary();
         generateAllEmployeesSummary();
+    }
+
+    function getAllowanceForMonth(empId, month) {
+        // Look for specific month allowance: monthly_allowances/{empId}_{month}
+        const key = `${empId}_${month}`;
+        if (monthlyAllowancesData[key] !== undefined && monthlyAllowancesData[key] !== null && monthlyAllowancesData[key] !== '') {
+            return parseFloat(monthlyAllowancesData[key]);
+        }
+        // Fallback to employee profile default allowance if not set for that month
+        const emp = employeesData[empId] || Object.values(employeesData).find(e => String(e.id) === String(empId));
+        return emp ? parseFloat(emp.allowances || 0) : 0;
     }
 
     function calculateSalary() {
@@ -521,12 +496,12 @@
             return;
         }
 
-        currentEmpData = empObj;
-
         const dailyRate = parseFloat(empObj.basic || empObj.dailyRate || 0);
         const rawEpfRate = empObj.epfBasic || empObj.epfDailyRate;
         const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
-        const allowance = parseFloat(empObj.allowances || 0);
+        
+        // Get allowance specific to this selected month
+        const allowance = getAllowanceForMonth(selectedEmpId, month);
 
         document.getElementById('dispEmpName').innerText = empObj.name || '-';
         document.getElementById('dispEmpId').innerText = empObj.id || selectedEmpId;
@@ -545,7 +520,6 @@
 
         Object.keys(monthAtt).forEach(dateStr => {
             const dayData = monthAtt[dateStr];
-
             if (dayData.status === 'Present') {
                 workedDays += 1;
             } else if (dayData.status === 'Half Day') {
@@ -635,7 +609,9 @@
             const dailyRate = parseFloat(emp.basic || emp.dailyRate || 0);
             const rawEpfRate = emp.epfBasic || emp.epfDailyRate;
             const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
-            const allowance = parseFloat(emp.allowances || 0);
+            
+            // Get month specific allowance for summary table as well
+            const allowance = getAllowanceForMonth(empId, month);
 
             const attKey = `${empId}_${month}`;
             const monthAtt = attendanceData[attKey] || {};
@@ -680,7 +656,7 @@
                     <td class="text-end fw-semibold">${basicTotal.toFixed(2)}</td>
                     <td class="text-center text-muted">${otHours.toFixed(1)}</td>
                     <td class="text-end">${otTotal.toFixed(2)}</td>
-                    <td class="text-end">${allowance.toFixed(2)}</td>
+                    <td class="text-end fw-semibold">${allowance.toFixed(2)}</td>
                     <td class="text-end fw-bold text-success" style="background-color: #f0fdf4;">${grossPay.toFixed(2)}</td>
                     <td class="text-end text-danger">${advance.toFixed(2)}</td>
                     <td class="text-end text-danger">${epf8.toFixed(2)}</td>
