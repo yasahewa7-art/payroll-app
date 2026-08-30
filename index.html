@@ -36,18 +36,6 @@
         </div>
     </div>
 
-    <!-- Month Selector Bar -->
-    <div class="card p-3 mb-4 no-print bg-light">
-        <div class="row align-items-center">
-            <div class="col-md-4">
-                <label class="form-label fw-bold mb-0"><i class="fa-solid fa-calendar-alt me-2 text-primary"></i>Select Payroll Month:</label>
-            </div>
-            <div class="col-md-4">
-                <input type="month" id="payrollMonth" class="form-control fw-bold" onchange="changeMonth()">
-            </div>
-        </div>
-    </div>
-
     <!-- Form Section -->
     <div class="card p-4 mb-4 no-print">
         <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-plus me-2"></i><span id="formTitle">Add New Employee Details</span></h4>
@@ -83,11 +71,11 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Daily EPF Applicable Amount (LKR) (Optional)</label>
-                    <input type="number" id="epfSalary" class="form-control" step="0.01" placeholder="දිනක EPF මුදල">
+                    <input type="number" id="epfSalary" class="form-control" step="0.01" placeholder="දිනක EPF මුදල (Optional)">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold text-danger">Allowances for Selected Month (LKR)</label>
-                    <input type="number" id="allowances" class="form-control border-danger" step="0.01" value="0">
+                    <label class="form-label fw-semibold">Allowances (LKR)</label>
+                    <input type="number" id="allowances" class="form-control" step="0.01" value="0">
                 </div>
                 <div class="col-12 d-flex justify-content-end gap-2 mt-3">
                     <button type="button" class="btn btn-secondary btn-custom d-none" id="cancelBtn" onclick="resetForm()">Cancel</button>
@@ -100,7 +88,7 @@
     <!-- Table Section -->
     <div class="card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list me-2"></i>Employee Records (<span id="currentMonthDisplay"></span>)</h4>
+            <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list me-2"></i>Employee Records (A-Z Sorted)</h4>
             <div class="no-print">
                 <select id="filterBranch" class="form-select" onchange="renderTable()">
                     <option value="All">All Branches</option>
@@ -120,7 +108,7 @@
                         <th>WHATSAPP</th>
                         <th>DAILY BASIC (LKR)</th>
                         <th>DAILY EPF (LKR)</th>
-                        <th>MONTHLY ALLOWANCES (LKR)</th>
+                        <th>ALLOWANCES (LKR)</th>
                         <th class="no-print text-center">ACTIONS</th>
                     </tr>
                 </thead>
@@ -147,40 +135,15 @@
         firebase.initializeApp(firebaseConfig);
     }
     const database = firebase.database();
-
-    // Set default month to current YYYY-MM
-    const today = new Date();
-    const currentMonthStr = today.toISOString().slice(0, 7); // e.g. "2026-08"
-    document.getElementById('payrollMonth').value = currentMonthStr;
-    document.getElementById('currentMonthDisplay').innerText = currentMonthStr;
+    const empRef = database.ref('employees');
 
     let employees = {};
-    let monthlyData = {};
-    let activeMonth = currentMonthStr;
 
-    // Load data whenever month changes
-    function loadMonthData() {
-        activeMonth = document.getElementById('payrollMonth').value;
-        document.getElementById('currentMonthDisplay').innerText = activeMonth;
-
-        // Fetch permanent employee info
-        database.ref('employees').on('value', (snapshot) => {
-            employees = snapshot.val() || {};
-            
-            // Fetch month-specific allowances
-            database.ref('monthly_payroll/' + activeMonth).on('value', (monthSnapshot) => {
-                monthlyData = monthSnapshot.val() || {};
-                renderTable();
-            });
-        });
-    }
-
-    // Initial load
-    loadMonthData();
-
-    function changeMonth() {
-        loadMonthData();
-    }
+    // Realtime Database Listener
+    empRef.on('value', (snapshot) => {
+        employees = snapshot.val() || {};
+        renderTable();
+    });
 
     function saveEmployee(event) {
         event.preventDefault();
@@ -195,22 +158,15 @@
         const allowances = parseFloat(document.getElementById('allowances').value) || 0;
         const editKey = document.getElementById('editKey').value;
 
-        // Permanent info
-        const empProfile = { id, name, branch, bankAcc, whatsapp, basic, dailyRate: basic, epfBasic };
-        // Month-specific info
-        const monthDetails = { allowances };
+        // dailyRate parameter added for direct linking with Salary Calculation page
+        const empData = { id, name, branch, bankAcc, whatsapp, basic, dailyRate: basic, epfBasic, allowances };
 
         if (!editKey) {
-            // New Entry - Push to employees and get key
-            const newEmpRef = database.ref('employees').push();
-            const newKey = newEmpRef.key;
-            
-            newEmpRef.set(empProfile);
-            database.ref('monthly_payroll/' + activeMonth + '/' + newKey).set(monthDetails);
+            // New Entry
+            empRef.push(empData);
         } else {
             // Update Existing Record
-            database.ref('employees/' + editKey).set(empProfile);
-            database.ref('monthly_payroll/' + activeMonth + '/' + editKey).set(monthDetails);
+            database.ref('employees/' + editKey).set(empData);
         }
 
         resetForm();
@@ -221,17 +177,12 @@
         const filterBranch = document.getElementById('filterBranch').value;
         tbody.innerHTML = '';
 
-        let empList = Object.keys(employees).map(key => {
-            const profile = employees[key];
-            const monthInfo = (monthlyData && monthlyData[key]) ? monthlyData[key] : { allowances: 0 };
-            return {
-                key: key,
-                ...profile,
-                allowances: monthInfo.allowances || 0
-            };
-        });
+        let empList = Object.keys(employees).map(key => ({
+            key: key,
+            ...employees[key]
+        }));
 
-        // Sort A-Z by name
+        // Sort A-Z
         empList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
         if (filterBranch !== 'All') {
@@ -239,7 +190,7 @@
         }
 
         if (empList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">මෙම මාසය සඳහා කිසිදු දත්තයක් ඇතුළත් කර නොමැත.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">කිසිදු දත්තයක් ඇතුළත් කර නොමැත.</td></tr>`;
             return;
         }
 
@@ -257,7 +208,7 @@
                     <td>${emp.whatsapp || '-'}</td>
                     <td class="fw-semibold text-dark">${basicVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td class="fw-semibold text-primary">${epfVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                    <td class="text-danger fw-semibold">${allowanceVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td>${allowanceVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td class="no-print text-center">
                         <button class="btn btn-sm btn-warning me-1" onclick="editEmployee('${emp.key}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${emp.key}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -269,8 +220,6 @@
 
     function editEmployee(key) {
         const emp = employees[key];
-        const monthInfo = (monthlyData && monthlyData[key]) ? monthlyData[key] : { allowances: 0 };
-
         document.getElementById('empId').value = emp.id || '';
         document.getElementById('empName').value = emp.name || '';
         document.getElementById('branch').value = emp.branch || 'Matara';
@@ -278,25 +227,23 @@
         document.getElementById('whatsapp').value = emp.whatsapp === '-' ? '' : emp.whatsapp;
         document.getElementById('basicSalary').value = emp.basic || emp.dailyRate || 0;
         document.getElementById('epfSalary').value = emp.epfBasic || 0;
-        document.getElementById('allowances').value = monthInfo.allowances || 0;
+        document.getElementById('allowances').value = emp.allowances || 0;
         document.getElementById('editKey').value = key;
 
-        document.getElementById('formTitle').innerText = 'Edit Employee Details (' + activeMonth + ')';
+        document.getElementById('formTitle').innerText = 'Edit Employee Details';
         document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-arrows-rotate me-2"></i>Update Details';
         document.getElementById('cancelBtn').classList.remove('d-none');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function deleteEmployee(key) {
-        if (confirm('ඔබට විශ්වාසද මෙම සේවක තොරතුරු සම්පූර්ණයෙන්ම ඉවත් කිරීමට අවශ්‍ය බව?')) {
+        if (confirm('ඔබට විශ්වාසද මෙම සේවක තොරතුරු ඉවත් කිරීමට අවශ්‍ය බව?')) {
             database.ref('employees/' + key).remove();
-            database.ref('monthly_payroll/' + activeMonth + '/' + key).remove();
         }
     }
 
     function resetForm() {
         document.getElementById('payrollForm').reset();
-        document.getElementById('payrollMonth').value = activeMonth; // Keep current selected month
         document.getElementById('editKey').value = '';
         document.getElementById('formTitle').innerText = 'Add New Employee Details';
         document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Save Details';
