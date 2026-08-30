@@ -66,8 +66,9 @@
     <div class="card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h4 class="fw-bold text-dark mb-0">Attendance & Deductions Sheet</h4>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
                 <span class="badge bg-success fs-6 p-2">Total OT: <span id="totOtBadge">0.0</span> Hrs</span>
+                <span class="badge bg-info text-dark fs-6 p-2">Total Allowances: <span id="totAllowBadge">0.00</span> LKR</span>
                 <span class="badge bg-warning text-dark fs-6 p-2">Total Advance: <span id="totAdvBadge">0.00</span> LKR</span>
                 <span class="badge bg-danger fs-6 p-2">Total Loan: <span id="totLoanBadge">0.00</span> LKR</span>
             </div>
@@ -77,18 +78,19 @@
             <table class="table table-bordered align-middle text-center">
                 <thead class="table-custom-header">
                     <tr>
-                        <th style="width: 120px;">DATE</th>
-                        <th style="width: 140px;">IN TIME</th>
-                        <th style="width: 140px;">OUT TIME</th>
-                        <th style="width: 140px;">STATUS</th>
-                        <th style="width: 110px;">OT HOURS</th>
-                        <th style="width: 130px;">ADVANCE (LKR)</th>
-                        <th style="width: 130px;">LOAN (LKR)</th>
-                        <th class="no-print" style="width: 90px;">ACTION</th>
+                        <th style="width: 110px;">DATE</th>
+                        <th style="width: 130px;">IN TIME</th>
+                        <th style="width: 130px;">OUT TIME</th>
+                        <th style="width: 130px;">STATUS</th>
+                        <th style="width: 100px;">OT HOURS</th>
+                        <th style="width: 120px;">ALLOWANCES (LKR)</th>
+                        <th style="width: 120px;">ADVANCE (LKR)</th>
+                        <th style="width: 120px;">LOAN (LKR)</th>
+                        <th class="no-print" style="width: 80px;">ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="attendanceTbody">
-                    <tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>
+                    <tr><td colspan="9" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -151,7 +153,7 @@
         const tbody = document.getElementById('attendanceTbody');
 
         if (!month || !empId) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>';
             resetBadges();
             return;
         }
@@ -164,6 +166,7 @@
         tbody.innerHTML = '';
 
         let totOt = 0;
+        let totAllow = 0;
         let totAdv = 0;
         let totLoan = 0;
 
@@ -175,10 +178,12 @@
             const outTime = dayRecord.outTime || '';
             const status = dayRecord.status || 'Present';
             const ot = parseFloat(dayRecord.ot || 0);
+            const allowances = parseFloat(dayRecord.allowances || 0);
             const advance = parseFloat(dayRecord.advance || 0);
             const loan = parseFloat(dayRecord.loan || 0);
 
             totOt += ot;
+            totAllow += allowances;
             totAdv += advance;
             totLoan += loan;
 
@@ -195,6 +200,7 @@
                         </select>
                     </td>
                     <td><span class="badge bg-secondary fs-6" id="ot_${dateStr}">${ot.toFixed(1)} Hrs</span></td>
+                    <td><input type="number" class="form-control form-control-sm text-center" value="${allowances || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
                     <td><input type="number" class="form-control form-control-sm text-center" value="${advance || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
                     <td><input type="number" class="form-control form-control-sm text-center" value="${loan || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
                     <td class="no-print">
@@ -205,6 +211,7 @@
         }
 
         document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
+        document.getElementById('totAllowBadge').innerText = totAllow.toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
@@ -235,6 +242,7 @@
                 outTime: '17:30',
                 status: existing.status || 'Present',
                 ot: 0,
+                allowances: existing.allowances || 0,
                 advance: existing.advance || 0,
                 loan: existing.loan || 0
             };
@@ -259,8 +267,9 @@
         const inTime = inputs[0].value;
         const outTime = inputs[1].value;
         const status = select.value;
-        const advance = parseFloat(inputs[2].value) || 0;
-        const loan = parseFloat(inputs[3].value) || 0;
+        const allowances = parseFloat(inputs[2].value) || 0;
+        const advance = parseFloat(inputs[3].value) || 0;
+        const loan = parseFloat(inputs[4].value) || 0;
 
         let ot = 0;
 
@@ -271,21 +280,18 @@
             const inMin = inH * 60 + inM;
             let outMin = outH * 60 + outM;
 
-            // පසුදා පාන්දර වන තෙක් වැඩකළ අවස්ථා සඳහා (උදා: 01:30 AM)
             if (outMin < inMin) {
-                outMin += 24 * 60; // පැය 24ක් එකතු කරයි
+                outMin += 24 * 60;
             }
 
-            const standardInMin = 8 * 60;        // 08:00 (පෙ.ව. 8:00)
-            const standardOutMin = 17 * 60 + 30; // 17:30 (ප.ව. 5:30)
+            const standardInMin = 8 * 60;
+            const standardOutMin = 17 * 60 + 30;
 
-            // 1. උදෑසන 08:00 ට පෙර OT
             let morningOtMin = 0;
             if (inMin < standardInMin) {
                 morningOtMin = standardInMin - inMin;
             }
 
-            // 2. සවස 17:30 න් පසු / රාත්‍රී / පාන්දර OT
             let eveningOtMin = 0;
             if (outMin > standardOutMin) {
                 eveningOtMin = outMin - standardOutMin;
@@ -299,6 +305,7 @@
             outTime,
             status,
             ot: parseFloat(ot.toFixed(2)),
+            allowances,
             advance,
             loan
         });
@@ -336,6 +343,7 @@
 
     function resetBadges() {
         document.getElementById('totOtBadge').innerText = '0.0';
+        document.getElementById('totAllowBadge').innerText = '0.00';
         document.getElementById('totAdvBadge').innerText = '0.00';
         document.getElementById('totLoanBadge').innerText = '0.00';
     }
