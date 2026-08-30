@@ -51,7 +51,7 @@
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
-            <!-- මුළු මාසයටම අදාළ Allowances කොටුව (ඉහළින් පමණි) -->
+            <!-- Monthly Allowance Input -->
             <div class="col-md-3">
                 <label class="form-label fw-semibold text-success">Monthly Allowance (LKR) *</label>
                 <input type="number" id="monthlyAllowanceInput" class="form-control border-success" placeholder="0.00" step="0.01" onchange="saveMonthlyAllowance()">
@@ -71,9 +71,9 @@
     <div class="card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h4 class="fw-bold text-dark mb-0">Attendance & Deductions Sheet</h4>
+            <!-- ඉහත පෙන්වූ නිල් පාට Allowance Badge එක මෙහිදී සම්පූර්ණයෙන්ම ඉවත් කර ඇත -->
             <div class="d-flex gap-2 flex-wrap">
                 <span class="badge bg-success fs-6 p-2">Total OT: <span id="totOtBadge">0.0</span> Hrs</span>
-                <span class="badge bg-info text-dark fs-6 p-2">Allowance: <span id="totAllowBadge">0.00</span> LKR</span>
                 <span class="badge bg-warning text-dark fs-6 p-2">Total Advance: <span id="totAdvBadge">0.00</span> LKR</span>
                 <span class="badge bg-danger fs-6 p-2">Total Loan: <span id="totLoanBadge">0.00</span> LKR</span>
             </div>
@@ -166,7 +166,7 @@
         const attKey = `${empId}_${month}`;
         const currentEmpAtt = savedAttendanceData[attKey] || {};
 
-        // Load Monthly Allowance value
+        // Load Monthly Allowance value into input box
         const monthlyAllowVal = currentEmpAtt.monthlyAllowance || 0;
         document.getElementById('monthlyAllowanceInput').value = monthlyAllowVal > 0 ? monthlyAllowVal : '';
 
@@ -217,7 +217,6 @@
         }
 
         document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
-        document.getElementById('totAllowBadge').innerText = Number(monthlyAllowVal).toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
@@ -230,9 +229,7 @@
         const attKey = `${empId}_${month}`;
         const monthlyAllowance = parseFloat(document.getElementById('monthlyAllowanceInput').value) || 0;
 
-        database.ref(`attendance/${attKey}/monthlyAllowance`).set(monthlyAllowance).then(() => {
-            document.getElementById('totAllowBadge').innerText = monthlyAllowance.toLocaleString('en-US', {minimumFractionDigits: 2});
-        });
+        database.ref(`attendance/${attKey}/monthlyAllowance`).set(monthlyAllowance);
     }
 
     function autoFillFullMonth() {
@@ -354,7 +351,6 @@
 
     function resetBadges() {
         document.getElementById('totOtBadge').innerText = '0.0';
-        document.getElementById('totAllowBadge').innerText = '0.00';
         document.getElementById('totAdvBadge').innerText = '0.00';
         document.getElementById('totLoanBadge').innerText = '0.00';
     }
