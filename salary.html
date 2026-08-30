@@ -503,7 +503,14 @@
         document.getElementById('dispEmpId').innerText = empObj.id || selectedEmpId;
         document.getElementById('dispBank').innerText = empObj.bankAcc || '-';
         document.getElementById('dispBranch').innerText = empObj.branch || '-';
-        document.getElementById('dispPeriod').innerText = month;
+        if (month) {
+    const [year, mNum] = month.split('-');
+    const dateObj = new Date(year, mNum - 1, 1);
+    const monthName = dateObj.toLocaleString('en', { month: 'long' });
+    document.getElementById('dispPeriod').innerText = `${monthName} ${year}`;
+} else {
+    document.getElementById('dispPeriod').innerText = '-';
+}
         document.getElementById('dispDailyRate').innerText = dailyRate.toFixed(2);
 
         const attKey = `${selectedEmpId}_${month}`;
