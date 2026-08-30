@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Attendance, Advance & Loan - Payroll App</title>
+    <title>Daily Attendance & Monthly Allowances - Payroll App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -37,26 +37,31 @@
         </div>
     </div>
 
-    <!-- Select Details -->
+    <!-- Select Details & Monthly Allowance Section -->
     <div class="card p-4 mb-4 no-print">
-        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock me-2"></i>Select Details</h5>
+        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock me-2"></i>Select Details & Monthly Allowance</h5>
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Select Month *</label>
-                <input type="month" id="attMonth" class="form-control" onchange="generateMonthSheet()">
+                <input type="month" id="attMonth" class="form-control" onchange="loadSheetData()">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label fw-semibold">Select Employee *</label>
-                <select id="attEmpSelect" class="form-select" onchange="generateMonthSheet()">
+                <select id="attEmpSelect" class="form-select" onchange="loadSheetData()">
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
-            <div class="col-md-5 d-flex gap-2">
+            <!-- මුළු මාසයටම අදාළ Allowances කොටුව (ඉහළින් පමණි) -->
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-success">Monthly Allowance (LKR) *</label>
+                <input type="number" id="monthlyAllowanceInput" class="form-control border-success" placeholder="0.00" step="0.01" onchange="saveMonthlyAllowance()">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
                 <button class="btn btn-warning btn-custom w-100 text-dark fw-bold" onclick="autoFillFullMonth()">
-                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Auto-Fill Month (08:00 - 17:30)
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-Fill
                 </button>
-                <button class="btn btn-success btn-custom fw-bold px-4" onclick="saveAllRows()">
-                    <i class="fa-solid fa-floppy-disk me-2"></i>Save Sheet
+                <button class="btn btn-success btn-custom fw-bold px-3" onclick="saveAllRows()">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>Save
                 </button>
             </div>
         </div>
@@ -68,7 +73,7 @@
             <h4 class="fw-bold text-dark mb-0">Attendance & Deductions Sheet</h4>
             <div class="d-flex gap-2 flex-wrap">
                 <span class="badge bg-success fs-6 p-2">Total OT: <span id="totOtBadge">0.0</span> Hrs</span>
-                <span class="badge bg-info text-dark fs-6 p-2">Total Allowances: <span id="totAllowBadge">0.00</span> LKR</span>
+                <span class="badge bg-info text-dark fs-6 p-2">Allowance: <span id="totAllowBadge">0.00</span> LKR</span>
                 <span class="badge bg-warning text-dark fs-6 p-2">Total Advance: <span id="totAdvBadge">0.00</span> LKR</span>
                 <span class="badge bg-danger fs-6 p-2">Total Loan: <span id="totLoanBadge">0.00</span> LKR</span>
             </div>
@@ -78,19 +83,18 @@
             <table class="table table-bordered align-middle text-center">
                 <thead class="table-custom-header">
                     <tr>
-                        <th style="width: 110px;">DATE</th>
-                        <th style="width: 130px;">IN TIME</th>
-                        <th style="width: 130px;">OUT TIME</th>
-                        <th style="width: 130px;">STATUS</th>
-                        <th style="width: 100px;">OT HOURS</th>
-                        <th style="width: 120px;">ALLOWANCES (LKR)</th>
-                        <th style="width: 120px;">ADVANCE (LKR)</th>
-                        <th style="width: 120px;">LOAN (LKR)</th>
-                        <th class="no-print" style="width: 80px;">ACTION</th>
+                        <th style="width: 120px;">DATE</th>
+                        <th style="width: 140px;">IN TIME</th>
+                        <th style="width: 140px;">OUT TIME</th>
+                        <th style="width: 140px;">STATUS</th>
+                        <th style="width: 120px;">OT HOURS</th>
+                        <th style="width: 140px;">ADVANCE (LKR)</th>
+                        <th style="width: 140px;">LOAN (LKR)</th>
+                        <th class="no-print" style="width: 90px;">ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="attendanceTbody">
-                    <tr><td colspan="9" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>
+                    <tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -128,7 +132,7 @@
 
     database.ref('attendance').on('value', (snapshot) => {
         savedAttendanceData = snapshot.val() || {};
-        generateMonthSheet();
+        loadSheetData();
     });
 
     function populateEmpDropdown() {
@@ -147,26 +151,31 @@
         select.value = currVal;
     }
 
-    function generateMonthSheet() {
+    function loadSheetData() {
         const month = document.getElementById('attMonth').value;
         const empId = document.getElementById('attEmpSelect').value;
         const tbody = document.getElementById('attendanceTbody');
 
         if (!month || !empId) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>';
+            document.getElementById('monthlyAllowanceInput').value = '';
             resetBadges();
             return;
         }
 
-        const [year, monthNum] = month.split('-');
-        const daysInMonth = new Date(year, monthNum, 0).getDate();
         const attKey = `${empId}_${month}`;
         const currentEmpAtt = savedAttendanceData[attKey] || {};
+
+        // Load Monthly Allowance value
+        const monthlyAllowVal = currentEmpAtt.monthlyAllowance || 0;
+        document.getElementById('monthlyAllowanceInput').value = monthlyAllowVal > 0 ? monthlyAllowVal : '';
+
+        const [year, monthNum] = month.split('-');
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
 
         tbody.innerHTML = '';
 
         let totOt = 0;
-        let totAllow = 0;
         let totAdv = 0;
         let totLoan = 0;
 
@@ -178,12 +187,10 @@
             const outTime = dayRecord.outTime || '';
             const status = dayRecord.status || 'Present';
             const ot = parseFloat(dayRecord.ot || 0);
-            const allowances = parseFloat(dayRecord.allowances || 0);
             const advance = parseFloat(dayRecord.advance || 0);
             const loan = parseFloat(dayRecord.loan || 0);
 
             totOt += ot;
-            totAllow += allowances;
             totAdv += advance;
             totLoan += loan;
 
@@ -200,7 +207,6 @@
                         </select>
                     </td>
                     <td><span class="badge bg-secondary fs-6" id="ot_${dateStr}">${ot.toFixed(1)} Hrs</span></td>
-                    <td><input type="number" class="form-control form-control-sm text-center" value="${allowances || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
                     <td><input type="number" class="form-control form-control-sm text-center" value="${advance || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
                     <td><input type="number" class="form-control form-control-sm text-center" value="${loan || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
                     <td class="no-print">
@@ -211,9 +217,22 @@
         }
 
         document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
-        document.getElementById('totAllowBadge').innerText = totAllow.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('totAllowBadge').innerText = Number(monthlyAllowVal).toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
+    }
+
+    function saveMonthlyAllowance() {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+        if (!month || !empId) return;
+
+        const attKey = `${empId}_${month}`;
+        const monthlyAllowance = parseFloat(document.getElementById('monthlyAllowanceInput').value) || 0;
+
+        database.ref(`attendance/${attKey}/monthlyAllowance`).set(monthlyAllowance).then(() => {
+            document.getElementById('totAllowBadge').innerText = monthlyAllowance.toLocaleString('en-US', {minimumFractionDigits: 2});
+        });
     }
 
     function autoFillFullMonth() {
@@ -235,17 +254,10 @@
 
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${month}-${String(day).padStart(2, '0')}`;
-            const existing = (savedAttendanceData[attKey] && savedAttendanceData[attKey][dateStr]) || {};
-
-            updates[`attendance/${attKey}/${dateStr}`] = {
-                inTime: '08:00',
-                outTime: '17:30',
-                status: existing.status || 'Present',
-                ot: 0,
-                allowances: existing.allowances || 0,
-                advance: existing.advance || 0,
-                loan: existing.loan || 0
-            };
+            updates[`attendance/${attKey}/${dateStr}/inTime`] = '08:00';
+            updates[`attendance/${attKey}/${dateStr}/outTime`] = '17:30';
+            updates[`attendance/${attKey}/${dateStr}/status`] = 'Present';
+            updates[`attendance/${attKey}/${dateStr}/ot`] = 0;
         }
 
         database.ref().update(updates).then(() => {
@@ -267,9 +279,8 @@
         const inTime = inputs[0].value;
         const outTime = inputs[1].value;
         const status = select.value;
-        const allowances = parseFloat(inputs[2].value) || 0;
-        const advance = parseFloat(inputs[3].value) || 0;
-        const loan = parseFloat(inputs[4].value) || 0;
+        const advance = parseFloat(inputs[2].value) || 0;
+        const loan = parseFloat(inputs[3].value) || 0;
 
         let ot = 0;
 
@@ -300,12 +311,11 @@
             ot = (morningOtMin + eveningOtMin) / 60;
         }
 
-        database.ref(`attendance/${attKey}/${dateStr}`).set({
+        database.ref(`attendance/${attKey}/${dateStr}`).update({
             inTime,
             outTime,
             status,
             ot: parseFloat(ot.toFixed(2)),
-            allowances,
             advance,
             loan
         });
@@ -328,6 +338,7 @@
             updateRow(dateStr);
         }
 
+        saveMonthlyAllowance();
         alert('සියලුම දත්ත සාර්ථකව Save විය!');
     }
 
