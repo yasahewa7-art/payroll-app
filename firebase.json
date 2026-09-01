@@ -6,11 +6,6 @@
         "source": "/",
         "destination": "/main.html",
         "type": 302
-      },
-      {
-        "source": "/index.html",
-        "destination": "/main.html",
-        "type": 302
       }
     ],
     "ignore": [
