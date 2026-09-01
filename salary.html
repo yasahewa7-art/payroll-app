@@ -44,7 +44,6 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        }
         .payslip-header {
             background-color: #cbd5e1 !important;
             border-bottom: 2px solid #334155;
@@ -135,22 +134,20 @@
             }
             .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
 
-            /* A5 Single Payslip Print */
             body.print-single {
                 @page { size: A5 portrait; margin: 5mm; }
             }
             body.print-single .summary-sheet-card { display: none !important; }
             body.print-single .payslip-container { 
-                display: block !important;
+                display: flex !important;
                 width: 148mm !important; 
-                height: 210mm !important; 
+                height: 200mm !important; 
                 border: 1.5px solid #334155 !important; 
                 box-shadow: none !important;
                 margin: 0 auto !important;
                 page-break-after: always;
             }
 
-            /* A4 Landscape Summary Print */
             body.print-summary {
                 @page { size: A4 landscape; margin: 8mm; }
             }
@@ -222,7 +219,7 @@
             </div>
             <div class="col-md-6 d-flex gap-2">
                 <button class="btn btn-primary btn-custom flex-fill" onclick="printSinglePayslip()"><i class="fa-solid fa-print me-1"></i> Print Payslip (A5)</button>
-                <button class="btn btn-info text-white btn-custom flex-fill" onclick="printSummarySheet()"><i class="fa-solid id-table me-1"></i> Print Summary (Landscape)</button>
+                <button class="btn btn-info text-white btn-custom flex-fill" onclick="printSummarySheet()"><i class="fa-solid fa-table me-1"></i> Print Summary (Landscape)</button>
                 <button class="btn btn-success btn-custom flex-fill" id="btnSendWhatsapp" onclick="sendWhatsAppImage()"><i class="fa-brands fa-whatsapp me-1"></i> WhatsApp</button>
             </div>
         </div>
@@ -365,14 +362,21 @@
             </div>
         </div>
 
-        <div class="text-center mb-3 border-bottom pb-3">
-            <div class="mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+            <div>
                 <img src="logo.ico" alt="Rukman Logo" style="height: 45px; object-fit: contain;">
             </div>
-            <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">Rukman Engineering (Pvt) Ltd</h3>
-            <h5 class="fw-semibold text-secondary mb-2" style="font-size: 0.95rem;">ALL EMPLOYEES SALARY SUMMARY SHEET</h5>
-            <div class="small text-muted mb-2">Matara & Weligama Branches</div>
-            <div class="badge text-dark border px-3 py-1 fw-bold" style="font-size: 0.8rem; background-color: #f1f5f9;">Pay Period: <span id="sumPeriodText">-</span></div>
+            <div class="text-center">
+                <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">Rukman Engineering (Pvt) Ltd</h3>
+                <h5 class="fw-semibold text-secondary mb-2" style="font-size: 0.95rem;">ALL EMPLOYEES SALARY SUMMARY SHEET</h5>
+                <div class="small text-muted mb-2">Matara & Weligama Branches</div>
+                <div class="badge text-dark border px-3 py-1 fw-bold" style="font-size: 0.8rem; background-color: #f1f5f9;">Pay Period: <span id="sumPeriodText">-</span></div>
+            </div>
+            <div>
+                <button id="langToggleBtn" class="btn btn-outline-dark btn-sm btn-custom no-print" onclick="toggleSummaryLanguage()">
+                    <i class="fa-solid fa-language me-1"></i> සිංහලට හරවන්න
+                </button>
+            </div>
         </div>
 
         <div class="table-responsive mb-3">
@@ -423,6 +427,7 @@
 
 <script>
     const SYSTEM_PASSWORD = "rukman123";
+    let isSinhalaSummary = false;
 
     document.addEventListener("DOMContentLoaded", function() {
         if (sessionStorage.getItem("isPayrollLoggedIn") === "true") {
@@ -456,6 +461,33 @@
     function logoutSystem() {
         sessionStorage.removeItem("isPayrollLoggedIn");
         location.reload();
+    }
+
+    function toggleSummaryLanguage() {
+        isSinhalaSummary = !isSinhalaSummary;
+        const btn = document.getElementById('langToggleBtn');
+        if (isSinhalaSummary) {
+            btn.innerHTML = '<i class="fa-solid fa-language me-1"></i> Switch to English';
+            btn.className = "btn btn-dark btn-sm btn-custom no-print";
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-language me-1"></i> සිංහලට හරවන්න';
+            btn.className = "btn btn-outline-dark btn-sm btn-custom no-print";
+        }
+        generateAllEmployeesSummary();
+    }
+
+    function getLocalizedText(name, branch) {
+        if (!isSinhalaSummary) {
+            return { name: name, branch: branch };
+        }
+        
+        const branchMap = {
+            "Matara": "මාතර",
+            "Weligama": "වැලිගම"
+        };
+
+        const sinhalaBranch = branchMap[branch] || branch;
+        return { name: name, branch: sinhalaBranch };
     }
 
     let firebaseInitialized = false;
@@ -711,12 +743,14 @@
             gGross += grossPay; gAdv += advance; gLoan += loanTotal; gEpf += epf8;
             gDed += totalDed; gNet += netPay;
 
+            const localized = getLocalizedText(emp.name || '-', emp.branch || '-');
+
             tbody.innerHTML += `
                 <tr>
                     <td class="text-center fw-bold text-secondary">${empId}</td>
                     <td>
-                        <div class="fw-bold text-dark">${emp.name || '-'}</div>
-                        <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>${emp.branch || '-'}</small>
+                        <div class="fw-bold text-dark">${localized.name}</div>
+                        <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>${localized.branch}</small>
                     </td>
                     <td class="text-end fw-semibold">${dailyRate.toFixed(2)}</td>
                     <td class="text-center"><span class="badge bg-light text-dark border">${workedDays} Days</span></td>
