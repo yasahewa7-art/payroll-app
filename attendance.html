@@ -72,7 +72,6 @@
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h4 class="fw-bold text-dark mb-0">Attendance & Deductions Sheet</h4>
             <div class="d-flex gap-2 flex-wrap">
-                <span class="badge bg-info text-dark fs-6 p-2">Total Days: <span id="totDaysBadge">0</span></span>
                 <span class="badge bg-success fs-6 p-2">Total OT: <span id="totOtBadge">0.0</span> Hrs</span>
                 <span class="badge bg-warning text-dark fs-6 p-2">Total Advance: <span id="totAdvBadge">0.00</span> LKR</span>
                 <span class="badge bg-danger fs-6 p-2">Total Loan: <span id="totLoanBadge">0.00</span> LKR</span>
@@ -125,9 +124,12 @@
 
     document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
+    // මෙහිදී ඔබගේ database එකේ employees වෙනුවට 'employee' හෝ වෙනත් නමක් ඇත්නම් එයට අදාළව දත්ත ලබා ගනී
     database.ref('/').on('value', (snapshot) => {
         const rootData = snapshot.val() || {};
+        // employees හෝ employee යන නමින් ඇති දත්ත ස්වයංක්‍රීයව සොයා ගැනීම
         employeesData = rootData.employees || rootData.employee || rootData.EmpList || {};
+        console.log("Loaded Employees:", employeesData); // F12 ඔබා Console එකෙන් බලාගත හැක
         populateEmpDropdown();
     });
 
@@ -142,11 +144,11 @@
         select.innerHTML = '<option value="">-- Choose Employee --</option>';
 
         let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
-        sortedList.sort((a, b) => {
-            const idA = parseInt(a.id || a.key || 0);
-            const idB = parseInt(b.id || b.key || 0);
-            return idA - idB;
-        });
+sortedList.sort((a, b) => {
+    const idA = parseInt(a.id || a.key || 0);
+    const idB = parseInt(b.id || b.key || 0);
+    return idA - idB;
+});
 
         sortedList.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
@@ -181,7 +183,6 @@
 
         tbody.innerHTML = '';
 
-        let totDays = 0;
         let totOt = 0;
         let totAdv = 0;
         let totLoan = 0;
@@ -196,11 +197,6 @@
             const ot = parseFloat(dayRecord.ot || 0);
             const advance = parseFloat(dayRecord.advance || 0);
             const loan = parseFloat(dayRecord.loan || 0);
-
-            // ගණනය කිරීම සඳහා: Status එක Present හෝ Half Day නම් සහ In Time එකක් දී තිබේ නම් වැඩ කළ දින ලෙස ගනී
-            if (status !== 'Absent' && (inTime || status === 'Present')) {
-                totDays += (status === 'Half Day' ? 0.5 : 1);
-            }
 
             totOt += ot;
             totAdv += advance;
@@ -228,7 +224,6 @@
             `;
         }
 
-        document.getElementById('totDaysBadge').innerText = totDays;
         document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
         document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
@@ -363,7 +358,6 @@
     }
 
     function resetBadges() {
-        document.getElementById('totDaysBadge').innerText = '0';
         document.getElementById('totOtBadge').innerText = '0.0';
         document.getElementById('totAdvBadge').innerText = '0.00';
         document.getElementById('totLoanBadge').innerText = '0.00';
