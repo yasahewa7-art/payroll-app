@@ -369,10 +369,10 @@
                 </button>
             </div>
             <div class="text-center">
-                <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">Rukman Engineering (Pvt) Ltd</h3>
-                <h5 class="fw-semibold text-secondary mb-2" style="font-size: 0.95rem;">ALL EMPLOYEES SALARY SUMMARY SHEET</h5>
-                <div class="small text-muted mb-2">Matara & Weligama Branches</div>
-                <div class="badge text-dark border px-3 py-1 fw-bold" style="font-size: 0.8rem; background-color: #f1f5f9;">Pay Period: <span id="sumPeriodText">-</span></div>
+                <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;" id="sumTitleMain">Rukman Engineering (Pvt) Ltd</h3>
+                <h5 class="fw-semibold text-secondary mb-2" style="font-size: 0.95rem;" id="sumTitleSub">ALL EMPLOYEES SALARY SUMMARY SHEET</h5>
+                <div class="small text-muted mb-2" id="sumBranches">Matara & Weligama Branches</div>
+                <div class="badge text-dark border px-3 py-1 fw-bold" style="font-size: 0.8rem; background-color: #f1f5f9;"><span id="sumPeriodLabel">Pay Period</span>: <span id="sumPeriodText">-</span></div>
             </div>
             <div class="d-flex gap-2">
                 <button id="langToggleBtn" class="btn btn-outline-dark btn-sm btn-custom no-print" onclick="toggleSummaryLanguage()">
@@ -387,7 +387,7 @@
         <div class="table-responsive mb-3">
             <table class="table summary-table align-middle">
                 <thead>
-                    <tr>
+                    <tr id="summaryTableHeaderRow">
                         <th>ID</th>
                         <th>Employee Details</th>
                         <th>Daily Rate</th>
@@ -428,6 +428,7 @@
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.1.net/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
@@ -499,7 +500,54 @@
             btn.innerHTML = '<i class="fa-solid fa-language me-1"></i> සිංහලට හරවන්න';
             btn.className = "btn btn-outline-dark btn-sm btn-custom no-print";
         }
+        updateHeaderLabels();
         generateAllEmployeesSummary();
+    }
+
+    function updateHeaderLabels() {
+        if (isSinhalaSummary) {
+            document.getElementById('sumTitleSub').innerText = "සියලුම සේවකයින්ගේ වැටුප් සාරාංශ ලේඛනය";
+            document.getElementById('sumBranches').innerText = "මාතර සහ වැලිගම ශාඛා";
+            document.getElementById('sumPeriodLabel').innerText = "වැටුප් කාලය";
+            
+            document.getElementById('summaryTableHeaderRow').innerHTML = `
+                <th>අංකය</th>
+                <th>සේවක විස්තර</th>
+                <th>දෛනික වැටුප</th>
+                <th>වැඩ කළ දින</th>
+                <th>මූලික එකතුව</th>
+                <th>OT පැය</th>
+                <th>OT මුදල</th>
+                <th>දීමනා</th>
+                <th>මුළු වැටුප</th>
+                <th>අත්තිකාරම්</th>
+                <th>ණය කප්පාදු</th>
+                <th>ईपीएफ 8% (EPF)</th>
+                <th>මුළු කප්පාදු</th>
+                <th>ශුද්ධ වැටුප</th>
+            `;
+        } else {
+            document.getElementById('sumTitleSub').innerText = "ALL EMPLOYEES SALARY SUMMARY SHEET";
+            document.getElementById('sumBranches').innerText = "Matara & Weligama Branches";
+            document.getElementById('sumPeriodLabel').innerText = "Pay Period";
+            
+            document.getElementById('summaryTableHeaderRow').innerHTML = `
+                <th>ID</th>
+                <th>Employee Details</th>
+                <th>Daily Rate</th>
+                <th>Worked Days</th>
+                <th>Basic Tot</th>
+                <th>OT Hrs</th>
+                <th>OT Amt</th>
+                <th>Allow.</th>
+                <th>Gross Pay</th>
+                <th>Advance</th>
+                <th>Loan</th>
+                <th>EPF 8%</th>
+                <th>Tot. Ded.</th>
+                <th>Net Salary</th>
+            `;
+        }
     }
 
     function getLocalizedText(name, branch) {
@@ -770,6 +818,7 @@
             gDed += totalDed; gNet += netPay;
 
             const localized = getLocalizedText(emp.name || '-', emp.branch || '-');
+            const daysLabelText = isSinhalaSummary ? "දින" : "Days";
 
             tbody.innerHTML += `
                 <tr>
@@ -779,7 +828,7 @@
                         <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>${localized.branch}</small>
                     </td>
                     <td class="text-end fw-semibold">${dailyRate.toFixed(2)}</td>
-                    <td class="text-center"><span class="badge bg-light text-dark border">${workedDays} Days</span></td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">${workedDays} ${daysLabelText}</span></td>
                     <td class="text-end fw-semibold">${basicTotal.toFixed(2)}</td>
                     <td class="text-center text-muted">${otHours.toFixed(1)}</td>
                     <td class="text-end">${otTotal.toFixed(2)}</td>
@@ -794,9 +843,11 @@
             `;
         });
 
+        const grandTotalText = isSinhalaSummary ? "මුළු එකතුව (LKR)" : "GRAND TOTAL (LKR)";
+
         tfoot.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center text-uppercase">Grand Total (LKR)</td>
+                <td colspan="4" class="text-center text-uppercase">${grandTotalText}</td>
                 <td>${gBasic.toFixed(2)}</td>
                 <td>-</td>
                 <td>${gOt.toFixed(2)}</td>
