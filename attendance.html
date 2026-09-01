@@ -197,7 +197,6 @@
             const advance = parseFloat(dayRecord.advance || 0);
             const loan = parseFloat(dayRecord.loan || 0);
 
-            // ගණනය කිරීම සඳහා: Status එක Present හෝ Half Day නම් සහ In Time එකක් දී තිබේ නම් වැඩ කළ දින ලෙස ගනී
             if (status !== 'Absent' && (inTime || status === 'Present')) {
                 totDays += (status === 'Half Day' ? 0.5 : 1);
             }
@@ -286,15 +285,22 @@
         const inputs = row.getElementsByTagName('input');
         const select = row.getElementsByTagName('select')[0];
 
-        const inTime = inputs[0].value;
-        const outTime = inputs[1].value;
+        let inTime = inputs[0].value;
+        let outTime = inputs[1].value;
         const status = select.value;
         const advance = parseFloat(inputs[2].value) || 0;
         const loan = parseFloat(inputs[3].value) || 0;
 
         let ot = 0;
 
-        if (status === 'Present' && inTime && outTime) {
+        // Status එක Absent නම් In Time, Out Time සහ OT අගයන් 0 කර හැරීම
+        if (status === 'Absent') {
+            inTime = '';
+            outTime = '';
+            inputs[0].value = '';
+            inputs[1].value = '';
+            ot = 0;
+        } else if (status === 'Present' && inTime && outTime) {
             const [inH, inM] = inTime.split(':').map(Number);
             const [outH, outM] = outTime.split(':').map(Number);
 
