@@ -348,13 +348,14 @@
                         <th>Allow.</th>
                         <th>Gross Pay</th>
                         <th>Advance</th>
+                        <th>Loan</th>
                         <th>EPF 8%</th>
                         <th>Tot. Ded.</th>
                         <th>Net Salary</th>
                     </tr>
                 </thead>
                 <tbody id="summaryTableBody">
-                    <tr><td colspan="13" class="text-center py-4 text-muted">Loading Data...</td></tr>
+                    <tr><td colspan="14" class="text-center py-4 text-muted">Loading Data...</td></tr>
                 </tbody>
                 <tfoot id="summaryTableFoot" class="fw-bold text-end" style="background-color: #0f172a; color: white;"></tfoot>
             </table>
@@ -604,13 +605,13 @@
 
         let keys = Object.keys(employeesData);
         if (keys.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">No Employee Data Found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-4">No Employee Data Found</td></tr>';
             tfoot.innerHTML = '';
             return;
         }
 
         let gBasic = 0, gOt = 0, gAllow = 0, gGross = 0;
-        let gAdv = 0, gEpf = 0, gDed = 0, gNet = 0;
+        let gAdv = 0, gLoan = 0, gEpf = 0, gDed = 0, gNet = 0;
 
         keys.forEach(k => {
             const emp = employeesData[k];
@@ -624,7 +625,7 @@
             const attKey = `${empId}_${month}`;
             const monthAtt = attendanceData[attKey] || {};
 
-            let workedDays = 0, otHours = 0, advance = 0;
+            let workedDays = 0, otHours = 0, advance = 0, loanTotal = 0;
 
             Object.keys(monthAtt).forEach(dateStr => {
                 if (dateStr === 'monthlyAllowance') return;
@@ -635,6 +636,7 @@
 
                 otHours += parseFloat(dayData.ot || 0);
                 advance += parseFloat(dayData.advance || 0);
+                loanTotal += parseFloat(dayData.loan || 0);
             });
 
             const basicTotal = workedDays * dailyRate;
@@ -651,7 +653,7 @@
             const netPay = grossPay - totalDed;
 
             gBasic += basicTotal; gOt += otTotal; gAllow += allowance;
-            gGross += grossPay; gAdv += advance; gEpf += epf8;
+            gGross += grossPay; gAdv += advance; gLoan += loanTotal; gEpf += epf8;
             gDed += totalDed; gNet += netPay;
 
             tbody.innerHTML += `
@@ -669,6 +671,7 @@
                     <td class="text-end fw-semibold">${allowance.toFixed(2)}</td>
                     <td class="text-end fw-bold text-success" style="background-color: #f0fdf4;">${grossPay.toFixed(2)}</td>
                     <td class="text-end text-danger">${advance.toFixed(2)}</td>
+                    <td class="text-end text-secondary fw-semibold">${loanTotal.toFixed(2)}</td>
                     <td class="text-end text-danger">${epf8.toFixed(2)}</td>
                     <td class="text-end fw-bold text-danger" style="background-color: #fef2f2;">${totalDed.toFixed(2)}</td>
                     <td class="text-end fw-bold text-primary" style="background-color: #eff6ff;">${netPay.toFixed(2)}</td>
@@ -685,6 +688,7 @@
                 <td>${gAllow.toFixed(2)}</td>
                 <td class="text-success">${gGross.toFixed(2)}</td>
                 <td class="text-warning">${gAdv.toFixed(2)}</td>
+                <td class="text-secondary">${gLoan.toFixed(2)}</td>
                 <td class="text-warning">${gEpf.toFixed(2)}</td>
                 <td class="text-danger">${gDed.toFixed(2)}</td>
                 <td class="bg-primary text-white">${gNet.toFixed(2)}</td>
@@ -720,7 +724,6 @@
                         text: 'Here is your salary payslip.'
                     }).catch(error => console.log('Sharing failed', error));
                 } else {
-                    // Fallback to downloading image if sharing is not supported
                     const link = document.createElement('a');
                     link.download = `Payslip_${selectedEmpId}.png`;
                     link.href = canvas.toDataURL("image/png");
