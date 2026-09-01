@@ -26,7 +26,7 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
                 <h2 class="fw-bold mb-1"><i class="fa-solid fa-users-gear me-2"></i>Employee & Payroll Management</h2>
-                <p class="mb-0 text-light opacity-75">Matara & Weligama Branches</p>
+                <p class="mb-0 text-light opacity-75">රුක්මන් ඉංජිනියරින් (පෞද්ගලික) සමාගම - මාතර සහ වැලිගම ශාඛා</p>
             </div>
             <div class="no-print mt-3 mt-md-0 d-flex gap-2">
                 <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-2"></i>Attendance Sheet</a>
@@ -88,7 +88,7 @@
     <!-- Table Section -->
     <div class="card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list me-2"></i>Employee Records (A-Z Sorted)</h4>
+            <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list me-2"></i>Employee Records (ID Ordered)</h4>
             <div class="no-print">
                 <select id="filterBranch" class="form-select" onchange="renderTable()">
                     <option value="All">All Branches</option>
@@ -158,7 +158,6 @@
         const allowances = parseFloat(document.getElementById('allowances').value) || 0;
         const editKey = document.getElementById('editKey').value;
 
-        // dailyRate parameter added for direct linking with Salary Calculation page
         const empData = { id, name, branch, bankAcc, whatsapp, basic, dailyRate: basic, epfBasic, allowances };
 
         if (!editKey) {
@@ -182,8 +181,12 @@
             ...employees[key]
         }));
 
-        // Sort A-Z
-        empList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        // Sort strictly by Numeric ID in ascending order (1, 2, 3... 10, 11, 12...)
+        empList.sort((a, b) => {
+            const idA = Number(a.id || 0);
+            const idB = Number(b.id || 0);
+            return idA - idB;
+        });
 
         if (filterBranch !== 'All') {
             empList = empList.filter(e => e.branch === filterBranch);
