@@ -431,7 +431,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // ඔබට අවශ්‍ය පරිදි මෙහි ඇති මුරපදය වෙනස් කරගත හැක (උදාහරණයක් ලෙස "1234")
     const SYSTEM_PASSWORD = "rukman123";
     let isSinhalaSummary = false;
 
@@ -553,17 +552,29 @@
     }
 
     function getLocalizedText(name, branch) {
-        if (!isSinhalaSummary) {
-            return { name: name, branch: branch };
-        }
-        
         const branchMap = {
             "Matara": "මාතර",
             "Weligama": "වැලිගම"
         };
-
         const sinhalaBranch = branchMap[branch] || branch;
-        return { name: name, branch: sinhalaBranch };
+
+        if (!isSinhalaSummary) {
+            return { name: name, branch: branch };
+        }
+        
+        const nameMap = {
+            "W.Nideesha Anuradhi": "ඩබ්ලිව්. නිදීෂා අනුරාධි",
+            "W.Inoka Sajeewani": "ඩබ්ලිව්. ඉනෝකා සජීවනී",
+            "N.Anura Priyantha": "එන්. අනුර ප්‍රියන්ත",
+            "H.R.Deepalal": "එච්.ආර්. දීපලාල්",
+            "O.Rajith Nilantha": "ඕ. රාජිත් නිලාන්ත",
+            "H.L.Kasun Dilanka": "එච්.එල්. කසුන් දਿਲංක",
+            "M.M.G.Mayurath Asan": "එම්.එම්.ජී. මයුරත් අසන්",
+            "M.M.G.Amith Lakmal": "එම්.එම්.ජී. අමිත් ලක්මාල්"
+        };
+
+        const sinhalaName = nameMap[name] || name;
+        return { name: sinhalaName, branch: sinhalaBranch };
     }
 
     let firebaseInitialized = false;
