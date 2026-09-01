@@ -178,16 +178,16 @@
         <div class="mb-3 text-primary">
             <i class="fa-solid fa-user-lock fa-3x" style="color: #0f172a;"></i>
         </div>
-        <h4 class="fw-bold mb-1" style="color: #0f172a;">Rukman Payroll</h4>
+        <h4 class="fw-bold mb-1" style="color: #0f172a;">රුක්මන් පේරෝල් (Rukman Payroll)</h4>
         <p class="text-muted small mb-4">කරුණාකර සිස්ටම් එකට ඇතුළු වීමට මුරපදය (Password) ඇතුළත් කරන්න.</p>
         
         <form onsubmit="handleLogin(event)">
             <div class="mb-3 text-start">
-                <label class="form-label fw-bold small">Password</label>
-                <input type="password" id="inputPassword" class="form-control form-control-lg" placeholder="Enter Password" required>
-                <div id="loginErrorMsg" class="text-danger small mt-2 d-none"><i class="fa-solid fa-circle-exclamation me-1"></i> වැරදි Password එකකි! නැවත උත්සාහ කරන්න.</div>
+                <label class="form-label fw-bold small">මුරපදය (Password)</label>
+                <input type="password" id="inputPassword" class="form-control form-control-lg" placeholder="මුරපදය ඇතුළත් කරන්න" required>
+                <div id="loginErrorMsg" class="text-danger small mt-2 d-none"><i class="fa-solid fa-circle-exclamation me-1"></i> වැරදි මුරපදයකි! නැවත උත්සාහ කරන්න.</div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 btn-lg btn-custom mb-2">Login to System</button>
+            <button type="submit" class="btn btn-primary w-100 btn-lg btn-custom mb-2">සිස්ටම් එකට ඇතුළු වන්න</button>
         </form>
     </div>
 </div>
@@ -431,6 +431,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+    // ඔබට අවශ්‍ය පරිදි මෙහි ඇති මුරපදය වෙනස් කරගත හැක (උදාහරණයක් ලෙස "1234")
     const SYSTEM_PASSWORD = "rukman123";
     let isSinhalaSummary = false;
 
@@ -522,7 +523,7 @@
                 <th>මුළු වැටුප</th>
                 <th>අත්තිකාරම්</th>
                 <th>ණය කප්පාදු</th>
-                <th>ईपीएफ 8% (EPF)</th>
+                <th>EPF 8%</th>
                 <th>මුළු කප්පාදු</th>
                 <th>ශුද්ධ වැටුප</th>
             `;
