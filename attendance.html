@@ -41,10 +41,10 @@
     <div class="card p-4 mb-4 no-print">
         <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock me-2"></i>Select Details & Monthly Allowance</h5>
         <div class="row g-3 align-items-end">
-            <!-- Year, Month, Date Selection Dropdowns -->
+            <!-- Year and Month Selection Dropdowns -->
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Year *</label>
-                <select id="attYear" class="form-select" onchange="onDateSelectionChange()">
+                <select id="attYear" class="form-select" onchange="loadSheetData()">
                     <option value="2024">2024</option>
                     <option value="2025">2025</option>
                     <option value="2026" selected>2026</option>
@@ -52,9 +52,9 @@
                     <option value="2028">2028</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="form-label fw-semibold">Month *</label>
-                <select id="attMonth" class="form-select" onchange="onDateSelectionChange()">
+                <select id="attMonth" class="form-select" onchange="loadSheetData()">
                     <option value="01">January</option>
                     <option value="02">February</option>
                     <option value="03">March</option>
@@ -69,12 +69,6 @@
                     <option value="12">December</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <label class="form-label fw-semibold">Day (Optional)</label>
-                <select id="attDay" class="form-select" onchange="loadSheetData()">
-                    <option value="">All Days (Full Month)</option>
-                </select>
-            </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Select Employee *</label>
                 <select id="attEmpSelect" class="form-select" onchange="loadSheetData()">
@@ -82,7 +76,7 @@
                 </select>
             </div>
             <!-- Monthly Allowance Input -->
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label fw-semibold text-success">Monthly Allowance (LKR) *</label>
                 <input type="number" id="monthlyAllowanceInput" class="form-control border-success" placeholder="0.00" step="0.01" onchange="saveMonthlyAllowance()">
             </div>
@@ -159,7 +153,6 @@
     const now = new Date();
     document.getElementById('attYear').value = now.getFullYear();
     document.getElementById('attMonth').value = String(now.getMonth() + 1).padStart(2, '0');
-    updateDayDropdown();
 
     database.ref('/').on('value', (snapshot) => {
         const rootData = snapshot.val() || {};
@@ -200,33 +193,8 @@
         return `${year}-${month}`;
     }
 
-    function updateDayDropdown() {
-        const year = document.getElementById('attYear').value;
-        const month = document.getElementById('attMonth').value;
-        const daySelect = document.getElementById('attDay');
-        const currentSelectedDay = daySelect.value;
-
-        daySelect.innerHTML = '<option value="">All Days (Full Month)</option>';
-
-        if (!year || !month) return;
-
-        const daysInMonth = new Date(year, month, 0).getDate();
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dayStr = String(d).padStart(2, '0');
-            daySelect.innerHTML += `<option value="${dayStr}">${d} (${dayStr})</option>`;
-        }
-
-        daySelect.value = currentSelectedDay;
-    }
-
-    function onDateSelectionChange() {
-        updateDayDropdown();
-        loadSheetData();
-    }
-
     function loadSheetData() {
         const monthStr = getSelectedMonthStr();
-        const selectedDay = document.getElementById('attDay').value;
         const empId = document.getElementById('attEmpSelect').value;
         const tbody = document.getElementById('attendanceTbody');
 
@@ -253,15 +221,7 @@
         let totAdv = 0;
         let totLoan = 0;
 
-        let startDay = 1;
-        let endDay = daysInMonth;
-
-        if (selectedDay) {
-            startDay = parseInt(selectedDay);
-            endDay = parseInt(selectedDay);
-        }
-
-        for (let day = startDay; day <= endDay; day++) {
+        for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
             const dayRecord = currentEmpAtt[dateStr] || {};
 
@@ -302,34 +262,10 @@
             `;
         }
 
-        // මුළු මාසයම බැලීමේදී මුළු එකතුව පෙන්වීමට සම්පූර්ණ මාසයේ දත්ත හරහා ගණනය කිරීම
-        if (selectedDay) {
-            let fullTotDays = 0;
-            let fullTotOt = 0;
-            let fullTotAdv = 0;
-            let fullTotLoan = 0;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dStr = `${monthStr}-${String(d).padStart(2, '0')}`;
-                const rec = currentEmpAtt[dStr] || {};
-                const rIn = rec.inTime || '';
-                const rSt = rec.status || 'Present';
-                if (rSt !== 'Absent' && (rIn || rSt === 'Present')) {
-                    fullTotDays += (rSt === 'Half Day' ? 0.5 : 1);
-                }
-                fullTotOt += parseFloat(rec.ot || 0);
-                fullTotAdv += parseFloat(rec.advance || 0);
-                fullTotLoan += parseFloat(rec.loan || 0);
-            }
-            document.getElementById('totDaysBadge').innerText = fullTotDays;
-            document.getElementById('totOtBadge').innerText = fullTotOt.toFixed(1);
-            document.getElementById('totAdvBadge').innerText = fullTotAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
-            document.getElementById('totLoanBadge').innerText = fullTotLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
-        } else {
-            document.getElementById('totDaysBadge').innerText = totDays;
-            document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
-            document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
-            document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
-        }
+        document.getElementById('totDaysBadge').innerText = totDays;
+        document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
+        document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
 
     function saveMonthlyAllowance() {
