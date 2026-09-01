@@ -41,9 +41,39 @@
     <div class="card p-4 mb-4 no-print">
         <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock me-2"></i>Select Details & Monthly Allowance</h5>
         <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Select Month *</label>
-                <input type="month" id="attMonth" class="form-control" onchange="loadSheetData()">
+            <!-- Year, Month, Date Selection Dropdowns -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Year *</label>
+                <select id="attYear" class="form-select" onchange="onDateSelectionChange()">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Month *</label>
+                <select id="attMonth" class="form-select" onchange="onDateSelectionChange()">
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06">June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09" selected>September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Day (Optional)</label>
+                <select id="attDay" class="form-select" onchange="loadSheetData()">
+                    <option value="">All Days (Full Month)</option>
+                </select>
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Select Employee *</label>
@@ -56,12 +86,14 @@
                 <label class="form-label fw-semibold text-success">Monthly Allowance (LKR) *</label>
                 <input type="number" id="monthlyAllowanceInput" class="form-control border-success" placeholder="0.00" step="0.01" onchange="saveMonthlyAllowance()">
             </div>
-            <div class="col-md-3 d-flex gap-2">
-                <button class="btn btn-warning btn-custom w-100 text-dark fw-bold" onclick="autoFillFullMonth()">
-                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-Fill
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-md-12 d-flex justify-content-end gap-2">
+                <button class="btn btn-warning btn-custom text-dark fw-bold px-4" onclick="autoFillFullMonth()">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-Fill Month
                 </button>
-                <button class="btn btn-success btn-custom fw-bold px-3" onclick="saveAllRows()">
-                    <i class="fa-solid fa-floppy-disk me-1"></i>Save
+                <button class="btn btn-success btn-custom fw-bold px-4" onclick="saveAllRows()">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>Save All
                 </button>
             </div>
         </div>
@@ -94,7 +126,7 @@
                     </tr>
                 </thead>
                 <tbody id="attendanceTbody">
-                    <tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>
+                    <tr><td colspan="8" class="text-muted py-4">කරුණාකර අවුරුද්ද, මාසය සහ සේවකයා තෝරන්න.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -123,7 +155,11 @@
     let employeesData = {};
     let savedAttendanceData = {};
 
-    document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
+    // Initialize current Year and Month on load
+    const now = new Date();
+    document.getElementById('attYear').value = now.getFullYear();
+    document.getElementById('attMonth').value = String(now.getMonth() + 1).padStart(2, '0');
+    updateDayDropdown();
 
     database.ref('/').on('value', (snapshot) => {
         const rootData = snapshot.val() || {};
@@ -158,25 +194,56 @@
         select.value = currVal;
     }
 
-    function loadSheetData() {
+    function getSelectedMonthStr() {
+        const year = document.getElementById('attYear').value;
         const month = document.getElementById('attMonth').value;
+        return `${year}-${month}`;
+    }
+
+    function updateDayDropdown() {
+        const year = document.getElementById('attYear').value;
+        const month = document.getElementById('attMonth').value;
+        const daySelect = document.getElementById('attDay');
+        const currentSelectedDay = daySelect.value;
+
+        daySelect.innerHTML = '<option value="">All Days (Full Month)</option>';
+
+        if (!year || !month) return;
+
+        const daysInMonth = new Date(year, month, 0).getDate();
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dayStr = String(d).padStart(2, '0');
+            daySelect.innerHTML += `<option value="${dayStr}">${d} (${dayStr})</option>`;
+        }
+
+        daySelect.value = currentSelectedDay;
+    }
+
+    function onDateSelectionChange() {
+        updateDayDropdown();
+        loadSheetData();
+    }
+
+    function loadSheetData() {
+        const monthStr = getSelectedMonthStr();
+        const selectedDay = document.getElementById('attDay').value;
         const empId = document.getElementById('attEmpSelect').value;
         const tbody = document.getElementById('attendanceTbody');
 
-        if (!month || !empId) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>';
+        if (!monthStr || !empId) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">කරුණාකර අවුරුද්ද, මාසය සහ සේවකයා තෝරන්න.</td></tr>';
             document.getElementById('monthlyAllowanceInput').value = '';
             resetBadges();
             return;
         }
 
-        const attKey = `${empId}_${month}`;
+        const attKey = `${empId}_${monthStr}`;
         const currentEmpAtt = savedAttendanceData[attKey] || {};
 
         const monthlyAllowVal = currentEmpAtt.monthlyAllowance || 0;
         document.getElementById('monthlyAllowanceInput').value = monthlyAllowVal > 0 ? monthlyAllowVal : '';
 
-        const [year, monthNum] = month.split('-');
+        const [year, monthNum] = monthStr.split('-');
         const daysInMonth = new Date(year, monthNum, 0).getDate();
 
         tbody.innerHTML = '';
@@ -186,8 +253,16 @@
         let totAdv = 0;
         let totLoan = 0;
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+        let startDay = 1;
+        let endDay = daysInMonth;
+
+        if (selectedDay) {
+            startDay = parseInt(selectedDay);
+            endDay = parseInt(selectedDay);
+        }
+
+        for (let day = startDay; day <= endDay; day++) {
+            const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
             const dayRecord = currentEmpAtt[dateStr] || {};
 
             const inTime = dayRecord.inTime || '';
@@ -227,42 +302,66 @@
             `;
         }
 
-        document.getElementById('totDaysBadge').innerText = totDays;
-        document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
-        document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
+        // මුළු මාසයම බැලීමේදී මුළු එකතුව පෙන්වීමට සම්පූර්ණ මාසයේ දත්ත හරහා ගණනය කිරීම
+        if (selectedDay) {
+            let fullTotDays = 0;
+            let fullTotOt = 0;
+            let fullTotAdv = 0;
+            let fullTotLoan = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dStr = `${monthStr}-${String(d).padStart(2, '0')}`;
+                const rec = currentEmpAtt[dStr] || {};
+                const rIn = rec.inTime || '';
+                const rSt = rec.status || 'Present';
+                if (rSt !== 'Absent' && (rIn || rSt === 'Present')) {
+                    fullTotDays += (rSt === 'Half Day' ? 0.5 : 1);
+                }
+                fullTotOt += parseFloat(rec.ot || 0);
+                fullTotAdv += parseFloat(rec.advance || 0);
+                fullTotLoan += parseFloat(rec.loan || 0);
+            }
+            document.getElementById('totDaysBadge').innerText = fullTotDays;
+            document.getElementById('totOtBadge').innerText = fullTotOt.toFixed(1);
+            document.getElementById('totAdvBadge').innerText = fullTotAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('totLoanBadge').innerText = fullTotLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
+        } else {
+            document.getElementById('totDaysBadge').innerText = totDays;
+            document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
+            document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
     }
 
     function saveMonthlyAllowance() {
-        const month = document.getElementById('attMonth').value;
+        const monthStr = getSelectedMonthStr();
         const empId = document.getElementById('attEmpSelect').value;
-        if (!month || !empId) return;
+        if (!monthStr || !empId) return;
 
-        const attKey = `${empId}_${month}`;
+        const attKey = `${empId}_${monthStr}`;
         const monthlyAllowance = parseFloat(document.getElementById('monthlyAllowanceInput').value) || 0;
 
         database.ref(`attendance/${attKey}/monthlyAllowance`).set(monthlyAllowance);
     }
 
     function autoFillFullMonth() {
-        const month = document.getElementById('attMonth').value;
+        const monthStr = getSelectedMonthStr();
         const empId = document.getElementById('attEmpSelect').value;
 
-        if (!month || !empId) {
-            alert('කරුණාකර පළමුව Month සහ Employee තෝරන්න!');
+        if (!monthStr || !empId) {
+            alert('කරුණාකර පළමුව Year, Month සහ Employee තෝරන්න!');
             return;
         }
 
         if (!confirm('මුළු මාසයටම 08:00 - 17:30 වේලාවන් ඇතුළත් කිරීමට අවශ්‍යද?')) return;
 
-        const [year, monthNum] = month.split('-');
+        const [year, monthNum] = monthStr.split('-');
         const daysInMonth = new Date(year, monthNum, 0).getDate();
-        const attKey = `${empId}_${month}`;
+        const attKey = `${empId}_${monthStr}`;
 
         let updates = {};
 
         for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+            const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
             updates[`attendance/${attKey}/${dateStr}/inTime`] = '08:00';
             updates[`attendance/${attKey}/${dateStr}/outTime`] = '17:30';
             updates[`attendance/${attKey}/${dateStr}/status`] = 'Present';
@@ -275,9 +374,9 @@
     }
 
     function updateRow(dateStr) {
-        const month = document.getElementById('attMonth').value;
+        const monthStr = getSelectedMonthStr();
         const empId = document.getElementById('attEmpSelect').value;
-        const attKey = `${empId}_${month}`;
+        const attKey = `${empId}_${monthStr}`;
 
         const row = document.getElementById(`row_${dateStr}`);
         if (!row) return;
@@ -293,7 +392,6 @@
 
         let ot = 0;
 
-        // Status එක Absent නම් In Time, Out Time සහ OT අගයන් 0 කර හැරීම
         if (status === 'Absent') {
             inTime = '';
             outTime = '';
@@ -338,19 +436,19 @@
     }
 
     function saveAllRows() {
-        const month = document.getElementById('attMonth').value;
+        const monthStr = getSelectedMonthStr();
         const empId = document.getElementById('attEmpSelect').value;
 
-        if (!month || !empId) {
-            alert('කරුණාකර Month සහ Employee තෝරන්න!');
+        if (!monthStr || !empId) {
+            alert('කරුණාකර Year, Month සහ Employee තෝරන්න!');
             return;
         }
 
-        const [year, monthNum] = month.split('-');
+        const [year, monthNum] = monthStr.split('-');
         const daysInMonth = new Date(year, monthNum, 0).getDate();
 
         for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+            const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
             updateRow(dateStr);
         }
 
@@ -359,9 +457,9 @@
     }
 
     function clearRow(dateStr) {
-        const month = document.getElementById('attMonth').value;
+        const monthStr = getSelectedMonthStr();
         const empId = document.getElementById('attEmpSelect').value;
-        const attKey = `${empId}_${month}`;
+        const attKey = `${empId}_${monthStr}`;
 
         if (confirm(`${dateStr} දින දත්ත ඉවත් කිරීමට අවශ්‍යද?`)) {
             database.ref(`attendance/${attKey}/${dateStr}`).remove();
