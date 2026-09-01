@@ -219,7 +219,7 @@
             </div>
             <div class="col-md-6 d-flex gap-2">
                 <button class="btn btn-primary btn-custom flex-fill" onclick="printSinglePayslip()"><i class="fa-solid fa-print me-1"></i> Print Payslip (A5)</button>
-                <button class="btn btn-info text-white btn-custom flex-fill" onclick="printSummarySheet()"><i class="fa-solid fa-table me-1"></i> Print Summary (Landscape)</button>
+                <button class="btn btn-info text-white btn-custom flex-fill" onclick="toggleSummarySheetView()"><i class="fa-solid fa-table me-1"></i> View Summary Sheet</button>
                 <button class="btn btn-success btn-custom flex-fill" id="btnSendWhatsapp" onclick="sendWhatsAppImage()"><i class="fa-brands fa-whatsapp me-1"></i> WhatsApp</button>
             </div>
         </div>
@@ -364,7 +364,9 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
             <div>
-                <img src="logo.ico" alt="Rukman Logo" style="height: 45px; object-fit: contain;">
+                <button class="btn btn-secondary btn-sm btn-custom no-print" onclick="closeSummarySheetView()">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Payslip
+                </button>
             </div>
             <div class="text-center">
                 <h3 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">Rukman Engineering (Pvt) Ltd</h3>
@@ -372,9 +374,12 @@
                 <div class="small text-muted mb-2">Matara & Weligama Branches</div>
                 <div class="badge text-dark border px-3 py-1 fw-bold" style="font-size: 0.8rem; background-color: #f1f5f9;">Pay Period: <span id="sumPeriodText">-</span></div>
             </div>
-            <div>
+            <div class="d-flex gap-2">
                 <button id="langToggleBtn" class="btn btn-outline-dark btn-sm btn-custom no-print" onclick="toggleSummaryLanguage()">
                     <i class="fa-solid fa-language me-1"></i> සිංහලට හරවන්න
+                </button>
+                <button class="btn btn-primary btn-sm btn-custom no-print" onclick="printSummarySheet()">
+                    <i class="fa-solid fa-print me-1"></i> Print / Save PDF
                 </button>
             </div>
         </div>
@@ -461,6 +466,27 @@
     function logoutSystem() {
         sessionStorage.removeItem("isPayrollLoggedIn");
         location.reload();
+    }
+
+    function toggleSummarySheetView() {
+        const summaryCard = document.getElementById('summarySheetCard');
+        const payslipCard = document.getElementById('payslipCard');
+        
+        if (summaryCard.style.display === 'block') {
+            summaryCard.style.display = 'none';
+            payslipCard.style.display = 'block';
+        } else {
+            summaryCard.style.display = 'block';
+            payslipCard.style.display = 'none';
+            document.body.className = "print-summary";
+            generateAllEmployeesSummary();
+        }
+    }
+
+    function closeSummarySheetView() {
+        document.getElementById('summarySheetCard').style.display = 'none';
+        document.getElementById('payslipCard').style.display = 'block';
+        document.body.className = "print-single";
     }
 
     function toggleSummaryLanguage() {
