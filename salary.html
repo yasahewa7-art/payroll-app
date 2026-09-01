@@ -87,6 +87,17 @@
             object-fit: contain;
         }
 
+        /* මුද්‍රණය කරන විට මුදුනට එන URL ඉවත් කිරීමට සහ පිටු ආන්තික සකස් කිරීමට */
+        @page { 
+            size: auto; 
+            margin: 5mm; 
+        }
+
+        /* මුද්‍රණය වන අවස්ථාවේදී පමණක් පෙන්වන Header එක (මුදුනට NUVIA Labs දීමට) */
+        .print-header-only {
+            display: none;
+        }
+
         .summary-sheet-card {
             background: #ffffff;
             border-radius: 12px;
@@ -117,10 +128,9 @@
         }
         .summary-table tbody tr:hover { background-color: #f8fafc; }
 
-        @page { size: auto; margin: 5mm; }
-
         @media print {
             .no-print, #loginModalOverlay { display: none !important; }
+            
             body { 
                 background-color: white !important; 
                 margin: 0; padding: 0;
@@ -128,6 +138,17 @@
                 print-color-adjust: exact !important;
             }
             .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+
+            /* Print කරන විට මුදුනට NUVIA Labs විස්තර පෙන්වීම */
+            .print-header-only {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #cbd5e1;
+                padding-bottom: 6px;
+                margin-bottom: 10px;
+                background-color: #f8fafc !important;
+            }
 
             body.print-single .summary-sheet-card { display: none !important; }
             body.print-single .payslip-container { 
@@ -328,8 +349,21 @@
 
     <!-- SUMMARY SHEET SECTION -->
     <div class="summary-sheet-card my-4" id="summarySheetCard">
+        <!-- මුද්‍රණය වන විට ඉහළින්ම (URL එක තිබූ තැන) පෙන්වන NUVIA Labs විස්තර -->
+        <div class="print-header-only px-2 py-1">
+            <div class="d-flex align-items-center gap-2">
+                <img src="https://raw.githubusercontent.com/yasahewa7-art/payroll-app/main/logo.jpg" alt="NUVIA Labs" class="designer-logo" crossorigin="anonymous">
+                <div>
+                    <strong style="color: #4c1d95; font-size: 0.75rem;">NUVIA Labs</strong><br>
+                    <span style="font-size: 0.55rem; color: #64748b;">STREAMLINE. PROMOTE. GROW.</span>
+                </div>
+            </div>
+            <div class="text-end" style="font-size: 0.65rem;">
+                📞 (074) 2271 770 | 💬 (074) 2510 522
+            </div>
+        </div>
+
         <div class="text-center mb-4 border-bottom pb-3">
-            <!-- Logo එක සහ Company නම Summary Sheet එකට එකතු කරන ලදී -->
             <div class="mb-2">
                 <img src="logo.ico" alt="Rukman Logo" style="height: 45px; object-fit: contain;">
             </div>
@@ -339,7 +373,7 @@
             <div class="badge text-dark border px-3 py-1 fw-bold" style="font-size: 0.8rem; background-color: #f1f5f9;">Pay Period: <span id="sumPeriodText">-</span></div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive mb-3">
             <table class="table summary-table align-middle">
                 <thead>
                     <tr>
@@ -364,6 +398,21 @@
                 </tbody>
                 <tfoot id="summaryTableFoot" class="fw-bold text-end" style="background-color: #0f172a; color: white;"></tfoot>
             </table>
+        </div>
+
+        <!-- Summary Sheet එකේ පහළ Footer එක -->
+        <div class="designer-footer d-flex justify-content-between align-items-center rounded mt-3">
+            <div class="d-flex align-items-center gap-2">
+                <img src="https://raw.githubusercontent.com/yasahewa7-art/payroll-app/main/logo.jpg" alt="NUVIA Labs" class="designer-logo" crossorigin="anonymous">
+                <div>
+                    <strong style="color: #4c1d95;">NUVIA Labs</strong><br>
+                    <span style="font-size: 0.6rem; color: #64748b;">STREAMLINE. PROMOTE. GROW.</span>
+                </div>
+            </div>
+            <div class="text-end">
+                📞 (074) 2271 770<br>
+                💬 (074) 2510 522
+            </div>
         </div>
     </div>
 </div>
