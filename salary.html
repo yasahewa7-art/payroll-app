@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary Payslip Generator - Rukman Payroll System</title>
+    <title>Daily Attendance & Monthly Allowances - Payroll App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -12,194 +12,95 @@
         .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .btn-custom { border-radius: 6px; font-weight: 500; }
         .table-custom-header { background-color: #0f172a; color: white; }
-        .company-logo { width: 70px; height: 70px; object-fit: contain; border-radius: 50%; background: white; padding: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        
-        /* Summary Sheet Styling */
-        #summarySection { display: none; }
-        .summary-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
-
-        /* Payslip A5 styling */
-        .payslip-container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        
         @media print {
             .no-print { display: none !important; }
-            .card { box-shadow: none; border: none; }
-            #payslipCard { display: none !important; }
-            #summarySection { display: block !important; }
-            body { background-color: white; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+            input, select { border: none !important; background: transparent !important; }
         }
     </style>
 </head>
 <body>
 
 <div class="container-fluid px-4 my-4">
-    <!-- Main Header -->
+    <!-- Header -->
     <div class="card header-bg p-4 mb-4 no-print">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
-                <h2 class="fw-bold mb-1"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip Generator</h2>
-                <p class="mb-0 text-light opacity-75">Rukman Payroll System - Matara & Weligama Branches</p>
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-calendar-days me-2"></i>Daily Attendance & Deductions</h2>
+                <p class="mb-0 text-light opacity-75">Matara & Weligama Branches</p>
             </div>
             <div class="d-flex gap-2 mt-3 mt-md-0">
-                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-user-plus me-2"></i>Registration</a>
-                <a href="attendance.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-calendar-days me-2"></i>Attendance</a>
-                <button class="btn btn-danger btn-custom" onclick="logout()"><i class="fa-solid fa-right-from-bracket me-2"></i>Logout</button>
+                <a href="index.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-arrow-left me-2"></i>Back to Registration</a>
+                <a href="salary.html" class="btn btn-outline-light btn-custom"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Salary Payslip</a>
+                <button class="btn btn-primary btn-custom" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Print Sheet</button>
             </div>
         </div>
-        <hr class="border-light opacity-25 my-3">
+    </div>
+
+    <!-- Select Details & Monthly Allowance Section -->
+    <div class="card p-4 mb-4 no-print">
+        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock me-2"></i>Select Details & Monthly Allowance</h5>
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Select Month *</label>
-                <input type="month" id="salaryMonth" class="form-control" onchange="loadPayslipData()">
+                <input type="month" id="attMonth" class="form-control" onchange="loadSheetData()">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label fw-semibold">Select Employee *</label>
-                <select id="salaryEmpSelect" class="form-select" onchange="loadPayslipData()">
+                <select id="attEmpSelect" class="form-select" onchange="loadSheetData()">
                     <option value="">-- Choose Employee --</option>
                 </select>
             </div>
-            <div class="col-md-5 d-flex gap-2 flex-wrap">
-                <button class="btn btn-primary btn-custom" onclick="printPayslip()"><i class="fa-solid fa-print me-2"></i>Print Payslip</button>
-                <button class="btn btn-info btn-custom text-dark fw-bold" onclick="toggleSummaryView()"><i class="fa-solid fa-table-cells me-2"></i>View Summary Sheet</button>
-                <button class="btn btn-success btn-custom" onclick="shareWhatsApp()"><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp</button>
+            <!-- Monthly Allowance Input -->
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-success">Monthly Allowance (LKR) *</label>
+                <input type="number" id="monthlyAllowanceInput" class="form-control border-success" placeholder="0.00" step="0.01" onchange="saveMonthlyAllowance()">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-warning btn-custom w-100 text-dark fw-bold" onclick="autoFillFullMonth()">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-Fill
+                </button>
+                <button class="btn btn-success btn-custom fw-bold px-3" onclick="saveAllRows()">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>Save
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Payslip View Card -->
-    <div id="payslipCard" class="card p-4">
-        <div class="payslip-container" id="printablePayslip">
-            <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
-                <div class="d-flex align-items-center gap-3">
-                    <img src="logo.ico" alt="Logo" class="company-logo">
-                    <div>
-                        <h4 class="fw-bold mb-0">රුක්මන් ඉංජිනේරු (පෞද්ගලික) සමාගම</h4>
-                        <p class="text-muted mb-0">මාතර සහ වැලිගම ශාඛා</p>
-                    </div>
-                </div>
-                <div class="text-end">
-                    <h5 class="fw-bold text-primary mb-0">SALARY PAYSLIP</h5>
-                    <p class="mb-0 text-secondary" id="payslipMonthLabel">-</p>
-                </div>
+    <!-- Attendance Table -->
+    <div class="card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h4 class="fw-bold text-dark mb-0">Attendance & Deductions Sheet</h4>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge bg-success fs-6 p-2">Total OT: <span id="totOtBadge">0.0</span> Hrs</span>
+                <span class="badge bg-warning text-dark fs-6 p-2">Total Advance: <span id="totAdvBadge">0.00</span> LKR</span>
+                <span class="badge bg-danger fs-6 p-2">Total Loan: <span id="totLoanBadge">0.00</span> LKR</span>
             </div>
-
-            <div class="row mb-3">
-                <div class="col-6">
-                    <p class="mb-1"><strong>Employee ID:</strong> <span id="psEmpId">-</span></p>
-                    <p class="mb-1"><strong>Name:</strong> <span id="psEmpName">-</span></p>
-                </div>
-                <div class="col-6 text-end">
-                    <p class="mb-1"><strong>Branch:</strong> <span id="psEmpBranch">-</span></p>
-                    <p class="mb-1"><strong>Daily Rate:</strong> LKR <span id="psDailyRate">0.00</span></p>
-                </div>
-            </div>
-
-            <table class="table table-bordered table-sm mb-3">
-                <thead class="table-light">
-                    <tr>
-                        <th>Description / විස්තරය</th>
-                        <th class="text-end">Units / පැය / දින</th>
-                        <th class="text-end">Amount (LKR) / මුදල</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Basic Earnings (වැඩ කළ දින සඳහා)</td>
-                        <td class="text-end" id="psDaysVal">0 Days</td>
-                        <td class="text-end" id="psBasicVal">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Overtime (OT Pay)</td>
-                        <td class="text-end" id="psOtHoursVal">0.0 Hrs</td>
-                        <td class="text-end" id="psOtAmtVal">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Monthly Allowance (මාසික දීමනාව)</td>
-                        <td class="text-end">-</td>
-                        <td class="text-end" id="psAllowVal">0.00</td>
-                    </tr>
-                    <tr class="table-active fw-bold">
-                        <td colspan="2">Gross Salary (මුළු වැටුප)</td>
-                        <td class="text-end text-success" id="psGrossVal">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Advance Deductions (අත්තිකාරම් කැපීම්)</td>
-                        <td class="text-end">-</td>
-                        <td class="text-end" id="psAdvVal">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Loan Deductions (ණය කැපීම්)</td>
-                        <td class="text-end">-</td>
-                        <td class="text-end" id="psLoanVal">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>EPF 8% Deduction</td>
-                        <td class="text-end">-</td>
-                        <td class="text-end" id="psEpfVal">0.00</td>
-                    </tr>
-                    <tr class="table-active fw-bold">
-                        <td colspan="2">Total Deductions (මුළු කැපීම්)</td>
-                        <td class="text-end text-danger" id="psTotDedVal">0.00</td>
-                    </tr>
-                    <tr class="table-dark fw-bold fs-5">
-                        <td colspan="2">NET SALARY (ශුද්ධ වැටුප)</td>
-                        <td class="text-end text-white" id="psNetVal">0.00</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="d-flex justify-content-between mt-5 pt-4 border-top text-muted small">
-                <span>Authorized Signature _____________________</span>
-                <span>Employee Signature _____________________</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Summary Sheet Section with Logo -->
-    <div id="summarySection" class="card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-            <button class="btn btn-secondary btn-custom" onclick="toggleSummaryView()"><i class="fa-solid fa-arrow-left me-2"></i>Back to Payslip</button>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-dark btn-custom" onclick="toggleLanguage()"><i class="fa-solid fa-language me-2"></i><span id="langBtnText">Switch to English</span></button>
-                <button class="btn btn-primary btn-custom" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Print / Save PDF</button>
-            </div>
-        </div>
-
-        <div class="summary-header">
-            <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
-                <img src="logo.ico" alt="Logo" class="company-logo">
-                <div>
-                    <h3 id="sumCompanyName" class="fw-bold mb-0">රුක්මන් ඉංජිනේරු (පෞද්ගලික) සමාගම</h3>
-                    <p id="sumCompanySub" class="text-muted mb-0">සියලුම සේවකයින්ගේ වැටුප් සාරංශ ලේඛනය</p>
-                </div>
-            </div>
-            <p class="text-secondary small mb-0">මාතර සහ වැලිගම ශාඛා</p>
-            <p class="fw-bold mt-1">වැටුප් කාලය: <span id="sumMonthDisplay"></span></p>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-sm align-middle text-center fs-7">
+            <table class="table table-bordered align-middle text-center">
                 <thead class="table-custom-header">
                     <tr>
-                        <th id="th_no">අංකය</th>
-                        <th id="th_name">සේේවක විස්තර</th>
-                        <th id="th_rate">දෛනික වැටුප</th>
-                        <th id="th_days">වැඩ කළ දින</th>
-                        <th id="th_basic">මූලික එකතුව</th>
-                        <th id="th_othrs">OT පැය</th>
-                        <th id="th_otamt">OT මුදල</th>
-                        <th id="th_allow">දීමනා</th>
-                        <th id="th_totgross">මුළු වැටුප</th>
-                        <th id="th_adv">අත්තිකාරම්</th>
-                        <th id="th_loan">ऋণ කැප្សාව</th>
-                        <th id="th_epf">EPF 8%</th>
-                        <th id="th_totded">මුළු කැප្សාව</th>
-                        <th id="th_netpay">शुද්ධ වැටුප</th>
+                        <th style="width: 120px;">DATE</th>
+                        <th style="width: 140px;">IN TIME</th>
+                        <th style="width: 140px;">OUT TIME</th>
+                        <th style="width: 140px;">STATUS</th>
+                        <th style="width: 120px;">OT HOURS</th>
+                        <th style="width: 140px;">ADVANCE (LKR)</th>
+                        <th style="width: 140px;">LOAN (LKR)</th>
+                        <th class="no-print" style="width: 90px;">ACTION</th>
                     </tr>
                 </thead>
-                <tbody id="summaryTableBody">
-                    <!-- Dynamic Rows -->
+                <tbody id="attendanceTbody">
+                    <tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>
                 </tbody>
             </table>
+        </div>
+        <div class="text-end mt-3 no-print">
+            <button class="btn btn-success btn-lg fw-bold px-5" onclick="saveAllRows()">
+                <i class="fa-solid fa-floppy-disk me-2"></i>Save Attendance Changes
+            </button>
         </div>
     </div>
 </div>
@@ -219,29 +120,35 @@
     const database = firebase.database();
 
     let employeesData = {};
-    let attendanceData = {};
-    let currentLang = 'si';
+    let savedAttendanceData = {};
 
-    const now = new Date();
-    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    document.getElementById('salaryMonth').value = defaultMonth;
+    document.getElementById('attMonth').value = new Date().toISOString().slice(0, 7);
 
+    // මෙහිදී ඔබගේ database එකේ employees වෙනුවට 'employee' හෝ වෙනත් නමක් ඇත්නම් එයට අදාළව දත්ත ලබා ගනී
     database.ref('/').on('value', (snapshot) => {
         const rootData = snapshot.val() || {};
+        // employees හෝ employee යන නමින් ඇති දත්ත ස්වයංක්‍රීයව සොයා ගැනීම
         employeesData = rootData.employees || rootData.employee || rootData.EmpList || {};
-        attendanceData = rootData.attendance || {};
+        console.log("Loaded Employees:", employeesData); // F12 ඔබා Console එකෙන් බලාගත හැක
         populateEmpDropdown();
-        loadPayslipData();
-        loadSummaryData();
+    });
+
+    database.ref('attendance').on('value', (snapshot) => {
+        savedAttendanceData = snapshot.val() || {};
+        loadSheetData();
     });
 
     function populateEmpDropdown() {
-        const select = document.getElementById('salaryEmpSelect');
+        const select = document.getElementById('attEmpSelect');
         const currVal = select.value;
         select.innerHTML = '<option value="">-- Choose Employee --</option>';
 
         let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
-        sortedList.sort((a, b) => (parseInt(a.id || a.key || 0) - parseInt(b.id || b.key || 0)));
+sortedList.sort((a, b) => {
+    const idA = parseInt(a.id || a.key || 0);
+    const idB = parseInt(b.id || b.key || 0);
+    return idA - idB;
+});
 
         sortedList.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
@@ -249,170 +156,212 @@
             const empBranch = emp.branch || '';
             select.innerHTML += `<option value="${empIdStr}">${empName} (${empIdStr}) - ${empBranch}</option>`;
         });
-        select.value = currVal || (sortedList[0] ? String(sortedList[0].id || sortedList[0].key) : '');
-        loadPayslipData();
+
+        select.value = currVal;
     }
 
-    function toggleSummaryView() {
-        const payslipCard = document.getElementById('payslipCard');
-        const summarySection = document.getElementById('summarySection');
-        if (summarySection.style.display === 'block') {
-            summarySection.style.display = 'none';
-            payslipCard.style.display = 'block';
-        } else {
-            summarySection.style.display = 'block';
-            payslipCard.style.display = 'none';
-            loadSummaryData();
-        }
-    }
+    function loadSheetData() {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+        const tbody = document.getElementById('attendanceTbody');
 
-    function loadPayslipData() {
-        const monthStr = document.getElementById('salaryMonth').value;
-        const empId = document.getElementById('salaryEmpSelect').value;
-        document.getElementById('payslipMonthLabel').innerText = monthStr;
-
-        if (!empId || !monthStr || !employeesData[empId]) {
+        if (!month || !empId) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">කරුණාකර මාසය සහ සේවකයා තෝරන්න.</td></tr>';
+            document.getElementById('monthlyAllowanceInput').value = '';
+            resetBadges();
             return;
         }
 
-        const emp = employeesData[empId];
-        const empName = emp.name || emp.fullName || 'Unknown';
-        const empBranch = emp.branch || '';
-        const dailyRate = parseFloat(emp.dailyRate || emp.salary || 0);
+        const attKey = `${empId}_${month}`;
+        const currentEmpAtt = savedAttendanceData[attKey] || {};
 
-        document.getElementById('psEmpId').innerText = empId;
-        document.getElementById('psEmpName').innerText = empName;
-        document.getElementById('psEmpBranch').innerText = empBranch;
-        document.getElementById('psDailyRate').innerText = dailyRate.toFixed(2);
+        const monthlyAllowVal = currentEmpAtt.monthlyAllowance || 0;
+        document.getElementById('monthlyAllowanceInput').value = monthlyAllowVal > 0 ? monthlyAllowVal : '';
 
-        const attKey = `${empId}_${monthStr}`;
-        const empAtt = attendanceData[attKey] || {};
-        const monthlyAllowance = parseFloat(empAtt.monthlyAllowance || 0);
-
-        let totalDays = 0;
-        let totalOT = 0;
-        let totalAdvance = 0;
-        let totalLoan = 0;
-
-        const [year, monthNum] = monthStr.split('-');
+        const [year, monthNum] = month.split('-');
         const daysInMonth = new Date(year, monthNum, 0).getDate();
 
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${monthStr}-${String(d).padStart(2, '0')}`;
-            const rec = empAtt[dateStr] || {};
-            const status = rec.status || 'Present';
-            const inTime = rec.inTime || '';
-
-            if (status !== 'Absent' && (inTime || status === 'Present')) {
-                totalDays += (status === 'Half Day' ? 0.5 : 1);
-            }
-            totalOT += parseFloat(rec.ot || 0);
-            totalAdvance += parseFloat(rec.advance || 0);
-            totalLoan += parseFloat(rec.loan || 0);
-        }
-
-        const basicEarn = totalDays * dailyRate;
-        const otAmount = totalOT * (dailyRate / 8 * 1.5);
-        const grossSalary = basicEarn + otAmount + monthlyAllowance;
-        const epf = basicEarn * 0.08;
-        const totalDeduction = totalAdvance + totalLoan + epf;
-        const netSalary = grossSalary - totalDeduction;
-
-        document.getElementById('psDaysVal').innerText = `${totalDays} Days`;
-        document.getElementById('psBasicVal').innerText = basicEarn.toFixed(2);
-        document.getElementById('psOtHoursVal').innerText = `${totalOT.toFixed(1)} Hrs`;
-        document.getElementById('psOtAmtVal').innerText = otAmount.toFixed(2);
-        document.getElementById('psAllowVal').innerText = monthlyAllowance.toFixed(2);
-        document.getElementById('psGrossVal').innerText = grossSalary.toFixed(2);
-        document.getElementById('psAdvVal').innerText = totalAdvance.toFixed(2);
-        document.getElementById('psLoanVal').innerText = totalLoan.toFixed(2);
-        document.getElementById('psEpfVal').innerText = epf.toFixed(2);
-        document.getElementById('psTotDedVal').innerText = totalDeduction.toFixed(2);
-        document.getElementById('psNetVal').innerText = netSalary.toFixed(2);
-    }
-
-    function loadSummaryData() {
-        const monthStr = document.getElementById('salaryMonth').value;
-        document.getElementById('sumMonthDisplay').innerText = monthStr;
-        const tbody = document.getElementById('summaryTableBody');
         tbody.innerHTML = '';
 
-        let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
-        sortedList.sort((a, b) => (parseInt(a.id || a.key || 0) - parseInt(b.id || b.key || 0)));
+        let totOt = 0;
+        let totAdv = 0;
+        let totLoan = 0;
 
-        sortedList.forEach(emp => {
-            const empId = String(emp.id || emp.key).trim();
-            const empName = emp.name || emp.fullName || 'Unknown';
-            const empBranch = emp.branch || '';
-            const dailyRate = parseFloat(emp.dailyRate || emp.salary || 0);
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+            const dayRecord = currentEmpAtt[dateStr] || {};
 
-            const attKey = `${empId}_${monthStr}`;
-            const empAtt = attendanceData[attKey] || {};
-            const monthlyAllowance = parseFloat(empAtt.monthlyAllowance || 0);
+            const inTime = dayRecord.inTime || '';
+            const outTime = dayRecord.outTime || '';
+            const status = dayRecord.status || 'Present';
+            const ot = parseFloat(dayRecord.ot || 0);
+            const advance = parseFloat(dayRecord.advance || 0);
+            const loan = parseFloat(dayRecord.loan || 0);
 
-            let totalDays = 0;
-            let totalOT = 0;
-            let totalAdvance = 0;
-            let totalLoan = 0;
-
-            const [year, monthNum] = monthStr.split('-');
-            const daysInMonth = new Date(year, monthNum, 0).getDate();
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${monthStr}-${String(d).padStart(2, '0')}`;
-                const rec = empAtt[dateStr] || {};
-                const status = rec.status || 'Present';
-                const inTime = rec.inTime || '';
-
-                if (status !== 'Absent' && (inTime || status === 'Present')) {
-                    totalDays += (status === 'Half Day' ? 0.5 : 1);
-                }
-                totalOT += parseFloat(rec.ot || 0);
-                totalAdvance += parseFloat(rec.advance || 0);
-                totalLoan += parseFloat(rec.loan || 0);
-            }
-
-            const basicEarn = totalDays * dailyRate;
-            const otAmount = totalOT * (dailyRate / 8 * 1.5);
-            const grossSalary = basicEarn + otAmount + monthlyAllowance;
-            const epf = basicEarn * 0.08;
-            const totalDeduction = totalAdvance + totalLoan + epf;
-            const netSalary = grossSalary - totalDeduction;
+            totOt += ot;
+            totAdv += advance;
+            totLoan += loan;
 
             tbody.innerHTML += `
-                <tr>
-                    <td>${empId}</td>
-                    <td class="text-start"><strong>${empName}</strong><br><small class="text-muted">${empBranch}</small></td>
-                    <td>${dailyRate.toFixed(2)}</td>
-                    <td>${totalDays} දින</td>
-                    <td>${basicEarn.toFixed(2)}</td>
-                    <td>${totalOT.toFixed(1)}</td>
-                    <td>${otAmount.toFixed(2)}</td>
-                    <td>${monthlyAllowance.toFixed(2)}</td>
-                    <td class="fw-bold text-success">${grossSalary.toFixed(2)}</td>
-                    <td>${totalAdvance.toFixed(2)}</td>
-                    <td>${totalLoan.toFixed(2)}</td>
-                    <td>${epf.toFixed(2)}</td>
-                    <td class="text-danger">${totalDeduction.toFixed(2)}</td>
-                    <td class="fw-bold text-primary">${netSalary.toFixed(2)}</td>
+                <tr id="row_${dateStr}">
+                    <td class="fw-bold">${dateStr}</td>
+                    <td><input type="time" class="form-control form-control-sm text-center" value="${inTime}" onchange="updateRow('${dateStr}')"></td>
+                    <td><input type="time" class="form-control form-control-sm text-center" value="${outTime}" onchange="updateRow('${dateStr}')"></td>
+                    <td>
+                        <select class="form-select form-select-sm" onchange="updateRow('${dateStr}')">
+                            <option value="Present" ${status === 'Present' ? 'selected' : ''}>Present</option>
+                            <option value="Half Day" ${status === 'Half Day' ? 'selected' : ''}>Half Day</option>
+                            <option value="Absent" ${status === 'Absent' ? 'selected' : ''}>Absent</option>
+                        </select>
+                    </td>
+                    <td><span class="badge bg-secondary fs-6" id="ot_${dateStr}">${ot.toFixed(1)} Hrs</span></td>
+                    <td><input type="number" class="form-control form-control-sm text-center" value="${advance || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
+                    <td><input type="number" class="form-control form-control-sm text-center" value="${loan || ''}" placeholder="0" step="0.01" onchange="updateRow('${dateStr}')"></td>
+                    <td class="no-print">
+                        <button class="btn btn-sm btn-outline-danger" onclick="clearRow('${dateStr}')" title="Clear Row"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 </tr>
             `;
+        }
+
+        document.getElementById('totOtBadge').innerText = totOt.toFixed(1);
+        document.getElementById('totAdvBadge').innerText = totAdv.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('totLoanBadge').innerText = totLoan.toLocaleString('en-US', {minimumFractionDigits: 2});
+    }
+
+    function saveMonthlyAllowance() {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+        if (!month || !empId) return;
+
+        const attKey = `${empId}_${month}`;
+        const monthlyAllowance = parseFloat(document.getElementById('monthlyAllowanceInput').value) || 0;
+
+        database.ref(`attendance/${attKey}/monthlyAllowance`).set(monthlyAllowance);
+    }
+
+    function autoFillFullMonth() {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+
+        if (!month || !empId) {
+            alert('කරුණාකර පළමුව Month සහ Employee තෝරන්න!');
+            return;
+        }
+
+        if (!confirm('මුළු මාසයටම 08:00 - 17:30 වේලාවන් ඇතුළත් කිරීමට අවශ්‍යද?')) return;
+
+        const [year, monthNum] = month.split('-');
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+        const attKey = `${empId}_${month}`;
+
+        let updates = {};
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+            updates[`attendance/${attKey}/${dateStr}/inTime`] = '08:00';
+            updates[`attendance/${attKey}/${dateStr}/outTime`] = '17:30';
+            updates[`attendance/${attKey}/${dateStr}/status`] = 'Present';
+            updates[`attendance/${attKey}/${dateStr}/ot`] = 0;
+        }
+
+        database.ref().update(updates).then(() => {
+            alert('සාර්ථකව Auto-Fill කර Save විය!');
         });
     }
 
-    function toggleLanguage() {
-        currentLang = currentLang === 'si' ? 'en' : 'si';
-        document.getElementById('langBtnText').innerText = currentLang === 'si' ? 'Switch to English' : 'සිංහලට මාරු වන්න';
-        document.getElementById('sumCompanyName').innerText = currentLang === 'si' ? 'රුක්මන් ඉංජිනේරු (පෞද්ගලික) සමාගම' : 'Rukman Engineering (Pvt) Ltd';
-        document.getElementById('sumCompanySub').innerText = currentLang === 'si' ? 'සියලුම සේවකයින්ගේ වැටුප් සාරංශ ලේඛනය' : 'Employee Salary Summary Sheet';
+    function updateRow(dateStr) {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+        const attKey = `${empId}_${month}`;
+
+        const row = document.getElementById(`row_${dateStr}`);
+        if (!row) return;
+
+        const inputs = row.getElementsByTagName('input');
+        const select = row.getElementsByTagName('select')[0];
+
+        const inTime = inputs[0].value;
+        const outTime = inputs[1].value;
+        const status = select.value;
+        const advance = parseFloat(inputs[2].value) || 0;
+        const loan = parseFloat(inputs[3].value) || 0;
+
+        let ot = 0;
+
+        if (status === 'Present' && inTime && outTime) {
+            const [inH, inM] = inTime.split(':').map(Number);
+            const [outH, outM] = outTime.split(':').map(Number);
+
+            const inMin = inH * 60 + inM;
+            let outMin = outH * 60 + outM;
+
+            if (outMin < inMin) {
+                outMin += 24 * 60;
+            }
+
+            const standardInMin = 8 * 60;
+            const standardOutMin = 17 * 60 + 30;
+
+            let morningOtMin = 0;
+            if (inMin < standardInMin) {
+                morningOtMin = standardInMin - inMin;
+            }
+
+            let eveningOtMin = 0;
+            if (outMin > standardOutMin) {
+                eveningOtMin = outMin - standardOutMin;
+            }
+
+            ot = (morningOtMin + eveningOtMin) / 60;
+        }
+
+        database.ref(`attendance/${attKey}/${dateStr}`).update({
+            inTime,
+            outTime,
+            status,
+            ot: parseFloat(ot.toFixed(2)),
+            advance,
+            loan
+        });
     }
 
-    function logout() {
-        window.location.href = 'index.html';
+    function saveAllRows() {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+
+        if (!month || !empId) {
+            alert('කරුණාකර Month සහ Employee තෝරන්න!');
+            return;
+        }
+
+        const [year, monthNum] = month.split('-');
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${month}-${String(day).padStart(2, '0')}`;
+            updateRow(dateStr);
+        }
+
+        saveMonthlyAllowance();
+        alert('සියලුම දත්ත සාර්ථකව Save විය!');
     }
 
-    function printPayslip() { window.print(); }
-    function shareWhatsApp() { alert('WhatsApp share functionality.'); }
+    function clearRow(dateStr) {
+        const month = document.getElementById('attMonth').value;
+        const empId = document.getElementById('attEmpSelect').value;
+        const attKey = `${empId}_${month}`;
+
+        if (confirm(`${dateStr} දින දත්ත ඉවත් කිරීමට අවශ්‍යද?`)) {
+            database.ref(`attendance/${attKey}/${dateStr}`).remove();
+        }
+    }
+
+    function resetBadges() {
+        document.getElementById('totOtBadge').innerText = '0.0';
+        document.getElementById('totAdvBadge').innerText = '0.00';
+        document.getElementById('totLoanBadge').innerText = '0.00';
+    }
 </script>
 
 </body>
