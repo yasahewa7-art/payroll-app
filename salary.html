@@ -208,8 +208,8 @@
     <div class="payslip-container p-0 mb-5" id="payslipCard">
         <div class="payslip-header">
             <div class="mb-2">
-    <img src="logo.ico" alt="Rukman Logo" style="height: 50px; object-fit: contain;">
-</div>
+                <img src="logo.ico" alt="Rukman Logo" style="height: 50px; object-fit: contain;">
+            </div>
             <h4 class="fw-bold mb-0 text-uppercase" style="color: #0f172a; letter-spacing: 1px;">Rukman Engineering (Pvt) Ltd</h4>
             <div class="fw-semibold text-secondary" style="font-size: 0.8rem;">(PAYSLIP)</div>
             <div class="small text-muted" style="font-size: 0.7rem;">Matara & Weligama Branches</div>
@@ -439,12 +439,12 @@
         const currVal = select.value;
         select.innerHTML = '<option value="">-- Choose Employee --</option>';
 
-       let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
-sortedList.sort((a, b) => {
-    const idA = parseInt(a.id || a.key || 0);
-    const idB = parseInt(b.id || b.key || 0);
-    return idA - idB;
-});
+        let sortedList = Object.keys(employeesData).map(k => ({ key: k, ...employeesData[k] }));
+        sortedList.sort((a, b) => {
+            const idA = parseInt(a.id || a.key || 0);
+            const idB = parseInt(b.id || b.key || 0);
+            return idA - idB;
+        });
 
         sortedList.forEach(emp => {
             const empIdStr = String(emp.id || emp.key).trim();
@@ -467,12 +467,10 @@ sortedList.sort((a, b) => {
         const attKey = `${empId}_${month}`;
         const empAtt = attendanceData[attKey];
 
-        // 1. attendance නෝඩ් එකෙන් අදාළ මාසයේ allowance එක ලබා ගැනීම
         if (empAtt && empAtt.monthlyAllowance !== undefined && empAtt.monthlyAllowance !== null && empAtt.monthlyAllowance !== '') {
             return parseFloat(empAtt.monthlyAllowance);
         }
 
-        // 2. නැත්නම් employee profile එකේ default allowance එක ලබා ගැනීම
         const emp = employeesData[empId] || Object.values(employeesData).find(e => String(e.id) === String(empId));
         return emp ? parseFloat(emp.allowances || 0) : 0;
     }
@@ -503,7 +501,6 @@ sortedList.sort((a, b) => {
         const rawEpfRate = empObj.epfBasic || empObj.epfDailyRate;
         const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
         
-        // අදාළ මාසයට අදාළ Allowance එක ලබා ගැනීම
         const allowance = getAllowanceForMonth(selectedEmpId, month);
 
         document.getElementById('dispEmpName').innerText = empObj.name || '-';
@@ -511,13 +508,13 @@ sortedList.sort((a, b) => {
         document.getElementById('dispBank').innerText = empObj.bankAcc || '-';
         document.getElementById('dispBranch').innerText = empObj.branch || '-';
         if (month) {
-    const [year, mNum] = month.split('-');
-    const dateObj = new Date(year, mNum - 1, 1);
-    const monthName = dateObj.toLocaleString('en', { month: 'long' });
-    document.getElementById('dispPeriod').innerText = `${monthName} ${year}`;
-} else {
-    document.getElementById('dispPeriod').innerText = '-';
-}
+            const [year, mNum] = month.split('-');
+            const dateObj = new Date(year, mNum - 1, 1);
+            const monthName = dateObj.toLocaleString('en', { month: 'long' });
+            document.getElementById('dispPeriod').innerText = `${monthName} ${year}`;
+        } else {
+            document.getElementById('dispPeriod').innerText = '-';
+        }
         document.getElementById('dispDailyRate').innerText = dailyRate.toFixed(2);
 
         const attKey = `${selectedEmpId}_${month}`;
@@ -529,7 +526,7 @@ sortedList.sort((a, b) => {
         let totalLoan = 0;
 
         Object.keys(monthAtt).forEach(dateStr => {
-            if (dateStr === 'monthlyAllowance') return; // monthlyAllowance ෆීල්ඩ් එක මඟ හැරීම සඳහා
+            if (dateStr === 'monthlyAllowance') return;
             
             const dayData = monthAtt[dateStr];
             if (dayData.status === 'Present') {
@@ -622,7 +619,6 @@ sortedList.sort((a, b) => {
             const rawEpfRate = emp.epfBasic || emp.epfDailyRate;
             const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
             
-            // Summary table එක සඳහාත් අදාළ මාසයේ Allowance එක ලබා ගැනීම
             const allowance = getAllowanceForMonth(empId, month);
 
             const attKey = `${empId}_${month}`;
@@ -696,79 +692,43 @@ sortedList.sort((a, b) => {
         `;
     }
 
-    function setPageOrientation(orientation) {
-        let styleSheet = document.getElementById("printOrientationStyle");
-        if (!styleSheet) {
-            styleSheet = document.createElement("style");
-            styleSheet.id = "printOrientationStyle";
-            document.head.appendChild(styleSheet);
-        }
-        styleSheet.innerHTML = `@page { size: A4 ${orientation}; margin: 5mm; }`;
-    }
-
     function printSinglePayslip() {
-        const selectedEmpId = document.getElementById('payEmpSelect').value;
-        if (!selectedEmpId) {
-            alert('කරුණාකර පළමුව Single Payslip එක සඳහා සේවකයෙකු තෝරන්න!');
-            return;
-        }
-        document.body.className = 'print-single';
-        setPageOrientation('portrait');
+        document.body.className = "print-single";
         window.print();
     }
 
     function printSummarySheet() {
-        document.body.className = 'print-summary';
-        setPageOrientation('landscape');
+        document.body.className = "print-summary";
         window.print();
     }
 
-    async function sendWhatsAppImage() {
-        const empName = document.getElementById('dispEmpName').innerText;
-        const period = document.getElementById('dispPeriod').innerText;
+    function sendWhatsAppImage() {
+        const card = document.getElementById("payslipCard");
         const selectedEmpId = document.getElementById('payEmpSelect').value;
-
         if (!selectedEmpId) {
-            alert('කරුණාකර WhatsApp යැවීමට සේවකයෙකු තෝරන්න!');
+            alert("කරුණාකර මුලින් සේවකයෙකු තෝරන්න!");
             return;
         }
 
-        const payslipElement = document.getElementById('payslipCard');
-        const btn = document.getElementById('btnSendWhatsapp');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Generating...';
-        btn.disabled = true;
-
-        try {
-            const canvas = await html2canvas(payslipElement, { scale: 2, useCORS: true });
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], `Payslip_${empName}_${period}.png`, { type: 'image/png' });
+        html2canvas(card, { scale: 2, useCORS: true }).then(canvas => {
+            canvas.toBlob(blob => {
+                const file = new File([blob], "payslip.png", { type: "image/png" });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Salary Payslip',
-                            text: `${empName} මහතාගේ / මියගේ ${period} වැටුප් පත්‍රිකාව (Payslip).`
-                        });
-                    } catch (err) {
-                        console.log('Share canceled or failed', err);
-                    }
+                    navigator.share({
+                        files: [file],
+                        title: 'Salary Payslip',
+                        text: 'Here is your salary payslip.'
+                    }).catch(error => console.log('Sharing failed', error));
                 } else {
+                    // Fallback to downloading image if sharing is not supported
                     const link = document.createElement('a');
-                    link.download = `Payslip_${empName}_${period}.png`;
-                    link.href = canvas.toDataURL('image/png');
+                    link.download = `Payslip_${selectedEmpId}.png`;
+                    link.href = canvas.toDataURL("image/png");
                     link.click();
-                    alert('Payslip පින්තූරය Download විය. ඔබට එය WhatsApp හරහා යැවිය හැක.');
+                    alert("Payslip image downloaded successfully!");
                 }
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }, 'image/png');
-        } catch (error) {
-            console.error(error);
-            alert('රූපය සකස් කිරීමේදී දෝෂයක් ඇතිවිය.');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
+            });
+        });
     }
 </script>
 </body>
