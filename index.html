@@ -145,8 +145,8 @@
                         <option value="May 2026">May 2026</option>
                         <option value="June 2026">June 2026</option>
                         <option value="July 2026">July 2026</option>
-                        <option value="August 2026">August 2026</option>
-                        <option value="September 2026" selected>September 2026</option>
+                        <option value="August 2026" selected>August 2026</option>
+                        <option value="September 2026">September 2026</option>
                         <option value="October 2026">October 2026</option>
                         <option value="November 2026">November 2026</option>
                         <option value="December 2026">December 2026</option>
@@ -281,8 +281,8 @@
 
     // Generate Print List with Net Salary from Firebase based on selected month
     async function generateAndPrintSalaryList() {
-        const selectedMonth = document.getElementById('modalMonthSelect').value;
-        document.getElementById('printMonthTitle').innerText = selectedMonth;
+        const selectedMonthModalVal = document.getElementById('modalMonthSelect').value; // e.g., "August 2026"
+        document.getElementById('printMonthTitle').innerText = selectedMonthModalVal;
         
         const printTbody = document.getElementById('printTableBody');
         printTbody.innerHTML = '';
@@ -304,20 +304,61 @@
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
         modalInstance.hide();
 
-        // Fetching attendance/salary records from Firebase for the selected month
-        const snapshot = await database.ref('attendance/' + selectedMonth).once('value');
-        const monthAttendance = snapshot.val() || {};
+        // Convert Month Name (e.g., "August 2026") to format "2026-08" to match database attendance keys
+        const parts = selectedMonthModalVal.split(' ');
+        const monthNameStr = parts[0]; 
+        const yearStr = parts[1];      
+        const dateObj = new Date(`${monthNameStr} 1, ${yearStr}`);
+        const mNum = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const monthCode = `${yearStr}-${mNum}`; // e.g., "2026-08"
+
+        // Fetch all attendance data from Firebase
+        const snapshot = await database.ref('attendance').once('value');
+        const allAttendance = snapshot.val() || {};
 
         empList.forEach((emp) => {
-            const empRecord = monthAttendance[emp.id] || {};
-            // Extracting net salary (checks netSalary or netPay fields)
-            const netSalary = parseFloat(empRecord.netSalary || empRecord.netPay || 0);
+            const empIdStr = String(emp.id || emp.key).trim();
+            const attKey = `${empIdStr}_${monthCode}`; // e.g., "1001_2026-08"
+            const monthAtt = allAttendance[attKey] || {};
+
+            let workedDays = 0;
+            let totalOtHours = 0;
+            let totalAdvance = 0;
+            let totalLoan = 0;
+
+            Object.keys(monthAtt).forEach(dateStr => {
+                if (dateStr === 'monthlyAllowance') return;
+                const dayData = monthAtt[dateStr];
+                if (dayData.status === 'Present') {
+                    workedDays += 1;
+                } else if (dayData.status === 'Half Day') {
+                    workedDays += 0.5;
+                }
+                totalOtHours += parseFloat(dayData.ot || 0);
+                totalAdvance += parseFloat(dayData.advance || 0);
+                totalLoan += parseFloat(dayData.loan || 0);
+            });
+
+            const dailyRate = parseFloat(emp.basic || emp.dailyRate || 0);
+            const basicTotal = workedDays * dailyRate;
+            const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
+            const otTotal = hourlyRate * totalOtHours;
+
+            let allowance = 0;
+            if (monthAtt.monthlyAllowance !== undefined && monthAtt.monthlyAllowance !== '') {
+                allowance = parseFloat(monthAtt.monthlyAllowance);
+            } else {
+                allowance = parseFloat(emp.allowances || 0);
+            }
+
+            const grossPay = basicTotal + otTotal + allowance;
+            const netSalary = grossPay - (totalAdvance + totalLoan);
 
             printTbody.innerHTML += `
                 <tr>
-                    <td><strong>${emp.id || ''}</strong></td>
+                    <td><strong>${empIdStr}</strong></td>
                     <td>${emp.name || ''}</td>
-                    <td class="fw-semibold">${netSalary > 0 ? netSalary.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'}</td>
+                    <td class="fw-semibold">${netSalary > 0 ? netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
                     <td style="height: 45px;"></td>
                 </tr>
             `;
