@@ -278,6 +278,11 @@
                     <td>EPF Employee (8%)</td>
                     <td class="text-end fw-semibold text-danger"><span id="dispEpfTot">0.00</span></td>
                 </tr>
+                <tr>
+                    <td>Special Allowances</td>
+                    <td class="text-end fw-semibold"><span id="dispSpecialAllowanceTot">0.00</span></td>
+                    <td colspan="2" class="text-muted text-center">-</td>
+                </tr>
                 <tr class="fw-bold" style="background-color: #f8fafc !important;">
                     <td>Total Earnings</td>
                     <td class="text-end text-success"><span id="dispTotalEarnings">0.00</span></td>
@@ -389,12 +394,12 @@
                     <tr id="summaryTableHeaderRow">
                         <th>ID</th>
                         <th>Employee Details</th>
-                        <th>Daily Rate</th>
                         <th>Worked Days</th>
                         <th>Basic Tot</th>
                         <th>OT Hrs</th>
                         <th>OT Amt</th>
                         <th>Allow.</th>
+                        <th>Special Allow.</th>
                         <th>Gross Pay</th>
                         <th>Advance</th>
                         <th>Loan</th>
@@ -512,12 +517,12 @@
             document.getElementById('summaryTableHeaderRow').innerHTML = `
                 <th>අංකය</th>
                 <th>සේවක විස්තර</th>
-                <th>දෛනික වැටුප</th>
                 <th>වැඩ කළ දින</th>
                 <th>මූලික එකතුව</th>
                 <th>OT පැය</th>
                 <th>OT මුදල</th>
                 <th>දීමනා</th>
+                <th>විශේෂ දීමනා</th>
                 <th>මුළු වැටුප</th>
                 <th>අත්තිකාරම්</th>
                 <th>ණය කප්පාදු</th>
@@ -534,12 +539,12 @@
             document.getElementById('summaryTableHeaderRow').innerHTML = `
                 <th>ID</th>
                 <th>Employee Details</th>
-                <th>Daily Rate</th>
                 <th>Worked Days</th>
                 <th>Basic Tot</th>
                 <th>OT Hrs</th>
                 <th>OT Amt</th>
                 <th>Allow.</th>
+                <th>Special Allow.</th>
                 <th>Gross Pay</th>
                 <th>Advance</th>
                 <th>Loan</th>
@@ -641,12 +646,14 @@
         const attKey = `${empId}_${month}`;
         const empAtt = attendanceData[attKey];
 
+        let baseAllowance = 0;
         if (empAtt && empAtt.monthlyAllowance !== undefined && empAtt.monthlyAllowance !== null && empAtt.monthlyAllowance !== '') {
-            return parseFloat(empAtt.monthlyAllowance);
+            baseAllowance = parseFloat(empAtt.monthlyAllowance);
+        } else {
+            const emp = employeesData[empId] || Object.values(employeesData).find(e => String(e.id) === String(empId));
+            baseAllowance = emp ? parseFloat(emp.allowances || 0) : 0;
         }
-
-        const emp = employeesData[empId] || Object.values(employeesData).find(e => String(e.id) === String(empId));
-        return emp ? parseFloat(emp.allowances || 0) : 0;
+        return baseAllowance;
     }
 
     function calculateSalary() {
@@ -675,7 +682,7 @@
         const rawEpfRate = empObj.epfBasic || empObj.epfDailyRate;
         const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
         
-        const allowance = getAllowanceForMonth(selectedEmpId, month);
+        const baseAllowance = getAllowanceForMonth(selectedEmpId, month);
 
         document.getElementById('dispEmpName').innerText = empObj.name || '-';
         document.getElementById('dispEmpId').innerText = empObj.id || selectedEmpId;
@@ -713,7 +720,15 @@
             totalLoan += parseFloat(dayData.loan || 0);
         });
 
-        const basicTotal = workedDays * dailyRate;
+        let calculatedBasicTotal = workedDays * dailyRate;
+        let finalBasicTotal = calculatedBasicTotal;
+        let specialAllowanceExtra = 0;
+
+        if (calculatedBasicTotal > 30000) {
+            finalBasicTotal = 30000;
+            specialAllowanceExtra = calculatedBasicTotal - 30000;
+        }
+
         const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
         const otTotal = hourlyRate * totalOtHours;
 
@@ -726,15 +741,16 @@
             etf3Total = epfApplicableTotal * 0.03;
         }
 
-        const totalEarnings = basicTotal + otTotal + allowance;
+        const totalEarnings = finalBasicTotal + otTotal + baseAllowance + specialAllowanceExtra;
         const totalDeductions = totalAdvance + epf8Total; 
         const netSalary = totalEarnings - totalDeductions;
 
         document.getElementById('dispDays').innerText = workedDays;
-        document.getElementById('dispBasicTot').innerText = basicTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispBasicTot').innerText = finalBasicTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
         document.getElementById('dispOtTot').innerText = otTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById('dispAllowanceTot').innerText = allowance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispAllowanceTot').innerText = baseAllowance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispSpecialAllowanceTot').innerText = specialAllowanceExtra.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispTotalEarnings').innerText = totalEarnings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -756,6 +772,7 @@
         document.getElementById('dispOtHours').innerText = '0.0';
         document.getElementById('dispOtTot').innerText = '0.00';
         document.getElementById('dispAllowanceTot').innerText = '0.00';
+        document.getElementById('dispSpecialAllowanceTot').innerText = '0.00';
         document.getElementById('dispTotalEarnings').innerText = '0.00';
         document.getElementById('dispAdvanceTot').innerText = '0.00';
         document.getElementById('dispLoanTot').innerText = '0.00';
@@ -781,7 +798,7 @@
             return;
         }
 
-        let gBasic = 0, gOt = 0, gAllow = 0, gGross = 0;
+        let gBasic = 0, gOt = 0, gAllow = 0, gSpecialAllow = 0, gGross = 0;
         let gAdv = 0, gLoan = 0, gEpf = 0, gDed = 0, gNet = 0;
 
         keys.forEach(k => {
@@ -791,7 +808,7 @@
             const rawEpfRate = emp.epfBasic || emp.epfDailyRate;
             const epfDailyRate = (rawEpfRate !== undefined && rawEpfRate !== null && rawEpfRate !== '' && parseFloat(rawEpfRate) > 0) ? parseFloat(rawEpfRate) : 0;
             
-            const allowance = getAllowanceForMonth(empId, month);
+            const baseAllowance = getAllowanceForMonth(empId, month);
 
             const attKey = `${empId}_${month}`;
             const monthAtt = attendanceData[attKey] || {};
@@ -810,10 +827,18 @@
                 loanTotal += parseFloat(dayData.loan || 0);
             });
 
-            const basicTotal = workedDays * dailyRate;
+            let calculatedBasicTotal = workedDays * dailyRate;
+            let finalBasicTotal = calculatedBasicTotal;
+            let specialAllowanceExtra = 0;
+
+            if (calculatedBasicTotal > 30000) {
+                finalBasicTotal = 30000;
+                specialAllowanceExtra = calculatedBasicTotal - 30000;
+            }
+
             const hourlyRate = dailyRate > 0 ? (dailyRate / 8) : 0;
             const otTotal = hourlyRate * otHours;
-            const grossPay = basicTotal + otTotal + allowance;
+            const grossPay = finalBasicTotal + otTotal + baseAllowance + specialAllowanceExtra;
 
             let epf8 = 0;
             if (epfDailyRate > 0) {
@@ -823,7 +848,7 @@
             const totalDed = advance + epf8;
             const netPay = grossPay - totalDed;
 
-            gBasic += basicTotal; gOt += otTotal; gAllow += allowance;
+            gBasic += finalBasicTotal; gOt += otTotal; gAllow += baseAllowance; gSpecialAllow += specialAllowanceExtra;
             gGross += grossPay; gAdv += advance; gLoan += loanTotal; gEpf += epf8;
             gDed += totalDed; gNet += netPay;
 
@@ -837,12 +862,12 @@
                         <div class="fw-bold text-dark">${localized.name}</div>
                         <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>${localized.branch}</small>
                     </td>
-                    <td class="text-end fw-semibold">${dailyRate.toFixed(2)}</td>
                     <td class="text-center"><span class="badge bg-light text-dark border">${workedDays} ${daysLabelText}</span></td>
-                    <td class="text-end fw-semibold">${basicTotal.toFixed(2)}</td>
+                    <td class="text-end fw-semibold">${finalBasicTotal.toFixed(2)}</td>
                     <td class="text-center text-muted">${otHours.toFixed(1)}</td>
                     <td class="text-end">${otTotal.toFixed(2)}</td>
-                    <td class="text-end fw-semibold">${allowance.toFixed(2)}</td>
+                    <td class="text-end fw-semibold">${baseAllowance.toFixed(2)}</td>
+                    <td class="text-end fw-semibold text-primary">${specialAllowanceExtra.toFixed(2)}</td>
                     <td class="text-end fw-bold text-success" style="background-color: #f0fdf4;">${grossPay.toFixed(2)}</td>
                     <td class="text-end text-danger">${advance.toFixed(2)}</td>
                     <td class="text-end text-secondary fw-semibold">${loanTotal.toFixed(2)}</td>
@@ -857,11 +882,12 @@
 
         tfoot.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center text-uppercase">${grandTotalText}</td>
+                <td colspan="3" class="text-center text-uppercase">${grandTotalText}</td>
                 <td>${gBasic.toFixed(2)}</td>
                 <td>-</td>
                 <td>${gOt.toFixed(2)}</td>
                 <td>${gAllow.toFixed(2)}</td>
+                <td>${gSpecialAllow.toFixed(2)}</td>
                 <td class="text-success">${gGross.toFixed(2)}</td>
                 <td class="text-warning">${gAdv.toFixed(2)}</td>
                 <td class="text-secondary">${gLoan.toFixed(2)}</td>
