@@ -246,7 +246,6 @@
                 <div class="col-6">
                     <div class="row"><div class="col-5 text-muted">Branch</div><div class="col-7 fw-bold">: <span id="dispBranch">-</span></div></div>
                     <div class="row"><div class="col-5 text-muted">Pay Period</div><div class="col-7 fw-bold">: <span id="dispPeriod">-</span></div></div>
-                    <div class="row"><div class="col-5 text-muted">Daily Rate</div><div class="col-7 fw-bold">: LKR <span id="dispDailyRate">0.00</span></div></div>
                 </div>
             </div>
         </div>
@@ -505,7 +504,7 @@
 
     function updateHeaderLabels() {
         if (isSinhalaSummary) {
-            document.getElementById('sumTitleMain').innerText = "රුක්මන්  ඉංජිනියරින් (පෞද්ගලික) සමාගම";
+            document.getElementById('sumTitleMain').innerText = "රුක්මන් ඉංජිනියරින් (පෞද්ගලික) සමාගම";
             document.getElementById('sumTitleSub').innerText = "සියලුම සේවකයින්ගේ වැටුප් සාරාංශ ලේඛනය";
             document.getElementById('sumBranches').innerText = "මාතර සහ වැලිගම ශාඛා";
             document.getElementById('sumPeriodLabel').innerText = "වැටුප් කාලය";
@@ -690,7 +689,6 @@
         } else {
             document.getElementById('dispPeriod').innerText = '-';
         }
-        document.getElementById('dispDailyRate').innerText = dailyRate.toFixed(2);
 
         const attKey = `${selectedEmpId}_${month}`;
         const monthAtt = attendanceData[attKey] || {};
@@ -753,7 +751,6 @@
         document.getElementById('dispBank').innerText = '-';
         document.getElementById('dispBranch').innerText = '-';
         document.getElementById('dispPeriod').innerText = '-';
-        document.getElementById('dispDailyRate').innerText = '0.00';
         document.getElementById('dispDays').innerText = '0';
         document.getElementById('dispBasicTot').innerText = '0.00';
         document.getElementById('dispOtHours').innerText = '0.0';
