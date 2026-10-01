@@ -272,15 +272,16 @@
                     <td>Loan Deductions</td>
                     <td class="text-end fw-semibold text-danger"><span id="dispLoanTot">0.00</span></td>
                 </tr>
+                <!-- Special Allowances සහ Allowances මාරු කර ඇත -->
                 <tr>
-                    <td>Allowances</td>
-                    <td class="text-end fw-semibold"><span id="dispAllowanceTot">0.00</span></td>
+                    <td>Special Allowances</td>
+                    <td class="text-end fw-semibold"><span id="dispSpecialAllowanceTot">0.00</span></td>
                     <td>EPF Employee (8%)</td>
                     <td class="text-end fw-semibold text-danger"><span id="dispEpfTot">0.00</span></td>
                 </tr>
                 <tr>
-                    <td>Special Allowances</td>
-                    <td class="text-end fw-semibold"><span id="dispSpecialAllowanceTot">0.00</span></td>
+                    <td>Allowances</td>
+                    <td class="text-end fw-semibold"><span id="dispAllowanceTot">0.00</span></td>
                     <td colspan="2" class="text-muted text-center">-</td>
                 </tr>
                 <tr class="fw-bold" style="background-color: #f8fafc !important;">
@@ -398,8 +399,8 @@
                         <th>Basic Tot</th>
                         <th>OT Hrs</th>
                         <th>OT Amt</th>
-                        <th>Allow.</th>
                         <th>Special Allow.</th>
+                        <th>Allow.</th>
                         <th>Gross Pay</th>
                         <th>Advance</th>
                         <th>Loan</th>
@@ -521,8 +522,8 @@
                 <th>මූලික එකතුව</th>
                 <th>OT පැය</th>
                 <th>OT මුදල</th>
-                <th>දීමනා</th>
                 <th>විශේෂ දීමනා</th>
+                <th>දීමනා</th>
                 <th>මුළු වැටුප</th>
                 <th>අත්තිකාරම්</th>
                 <th>ණය කප්පාදු</th>
@@ -543,8 +544,8 @@
                 <th>Basic Tot</th>
                 <th>OT Hrs</th>
                 <th>OT Amt</th>
-                <th>Allow.</th>
                 <th>Special Allow.</th>
+                <th>Allow.</th>
                 <th>Gross Pay</th>
                 <th>Advance</th>
                 <th>Loan</th>
@@ -866,8 +867,8 @@
                     <td class="text-end fw-semibold">${finalBasicTotal.toFixed(2)}</td>
                     <td class="text-center text-muted">${otHours.toFixed(1)}</td>
                     <td class="text-end">${otTotal.toFixed(2)}</td>
-                    <td class="text-end fw-semibold">${baseAllowance.toFixed(2)}</td>
                     <td class="text-end fw-semibold text-primary">${specialAllowanceExtra.toFixed(2)}</td>
+                    <td class="text-end fw-semibold">${baseAllowance.toFixed(2)}</td>
                     <td class="text-end fw-bold text-success" style="background-color: #f0fdf4;">${grossPay.toFixed(2)}</td>
                     <td class="text-end text-danger">${advance.toFixed(2)}</td>
                     <td class="text-end text-secondary fw-semibold">${loanTotal.toFixed(2)}</td>
@@ -886,8 +887,8 @@
                 <td>${gBasic.toFixed(2)}</td>
                 <td>-</td>
                 <td>${gOt.toFixed(2)}</td>
-                <td>${gAllow.toFixed(2)}</td>
                 <td>${gSpecialAllow.toFixed(2)}</td>
+                <td>${gAllow.toFixed(2)}</td>
                 <td class="text-success">${gGross.toFixed(2)}</td>
                 <td class="text-warning">${gAdv.toFixed(2)}</td>
                 <td class="text-secondary">${gLoan.toFixed(2)}</td>
