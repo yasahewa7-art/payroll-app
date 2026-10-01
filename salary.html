@@ -272,7 +272,7 @@
                     <td>Loan Deductions</td>
                     <td class="text-end fw-semibold text-danger"><span id="dispLoanTot">0.00</span></td>
                 </tr>
-                <!-- Special Allowances සහ Allowances මාරු කර ඇත -->
+                <!-- Special Allowances සහ Allowances නං මාරු කර ඇත -->
                 <tr>
                     <td>Special Allowances</td>
                     <td class="text-end fw-semibold"><span id="dispSpecialAllowanceTot">0.00</span></td>
@@ -750,8 +750,11 @@
         document.getElementById('dispBasicTot').innerText = finalBasicTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispOtHours').innerText = totalOtHours.toFixed(1);
         document.getElementById('dispOtTot').innerText = otTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById('dispAllowanceTot').innerText = baseAllowance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById('dispSpecialAllowanceTot').innerText = specialAllowanceExtra.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        // අගයන් නිවැරදිව මාරු කර ඇත (Allowances වලට specialAllowanceExtra සහ Special Allowances වලට baseAllowance)
+        document.getElementById('dispAllowanceTot').innerText = specialAllowanceExtra.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('dispSpecialAllowanceTot').innerText = baseAllowance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
         document.getElementById('dispTotalEarnings').innerText = totalEarnings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispAdvanceTot').innerText = totalAdvance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('dispLoanTot').innerText = totalLoan.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -867,8 +870,9 @@
                     <td class="text-end fw-semibold">${finalBasicTotal.toFixed(2)}</td>
                     <td class="text-center text-muted">${otHours.toFixed(1)}</td>
                     <td class="text-end">${otTotal.toFixed(2)}</td>
-                    <td class="text-end fw-semibold text-primary">${specialAllowanceExtra.toFixed(2)}</td>
-                    <td class="text-end fw-semibold">${baseAllowance.toFixed(2)}</td>
+                    <!-- අගයන් මාරු කර ඇත (Special Allowances සහ Allowances) -->
+                    <td class="text-end fw-semibold text-primary">${baseAllowance.toFixed(2)}</td>
+                    <td class="text-end fw-semibold">${specialAllowanceExtra.toFixed(2)}</td>
                     <td class="text-end fw-bold text-success" style="background-color: #f0fdf4;">${grossPay.toFixed(2)}</td>
                     <td class="text-end text-danger">${advance.toFixed(2)}</td>
                     <td class="text-end text-secondary fw-semibold">${loanTotal.toFixed(2)}</td>
@@ -887,8 +891,8 @@
                 <td>${gBasic.toFixed(2)}</td>
                 <td>-</td>
                 <td>${gOt.toFixed(2)}</td>
-                <td>${gSpecialAllow.toFixed(2)}</td>
                 <td>${gAllow.toFixed(2)}</td>
+                <td>${gSpecialAllow.toFixed(2)}</td>
                 <td class="text-success">${gGross.toFixed(2)}</td>
                 <td class="text-warning">${gAdv.toFixed(2)}</td>
                 <td class="text-secondary">${gLoan.toFixed(2)}</td>
